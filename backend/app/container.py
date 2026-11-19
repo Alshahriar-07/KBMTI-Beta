@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.analysis.service import AnalysisService
+from app.analysis.sources import BinanceCandleSource, FallbackCandleSource, RepositoryCandleSource
 from app.chat.service import ChatService
 from app.core.config import Settings
 from app.forecasting.automation import ForecastAutomation
@@ -25,12 +28,15 @@ from app.persistence.repositories import (
     CandleRepository,
     ChatRepository,
     ForecastRepository,
+    MarketSnapshotRepository,
     SettingsRepository,
     SignalRepository,
     TickRepository,
 )
 from app.signals.service import SignalService
 from app.system.monitor import SystemMonitor
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -55,6 +61,7 @@ class AppContainer:
     forecast_automation: ForecastAutomation
     chat: ChatService
     kie: KieService
+    analysis: AnalysisService | None
     system: SystemMonitor
     started_at: float
     log_file: Path | None = None
@@ -71,6 +78,7 @@ def build_container(
     binance_history: BinanceHistoryClient | None = None,
     patron: PatronInferenceService | None = None,
     kie: KieService | None = None,
+    analysis: AnalysisService | None = None,
 ) -> AppContainer:
     settings.ensure_dirs()
     db = Database(settings.db_path)
@@ -111,6 +119,21 @@ def build_container(
     )
     binance_history = binance_history or BinanceHistoryClient(settings)
     patron = patron or PatronInferenceService(settings)
+    # Market intelligence is optional exactly like KIE: a construction failure must
+    # degrade the analysis endpoints, never prevent the application from starting.
+    if analysis is None:
+        try:
+            analysis = AnalysisService(
+                source=FallbackCandleSource(
+                    BinanceCandleSource(binance_history),
+                    RepositoryCandleSource(candle_repo, source="binance"),
+                ),
+                repository=MarketSnapshotRepository(db),
+                settings=settings,
+            )
+        except Exception:  # pragma: no cover - construction is intentionally defensive
+            logger.exception("Market analysis failed to initialize; continuing without it")
+            analysis = None
     signals = SignalService(market=market, repository=signal_repo, settings=settings)
     forecast = ForecastService(
         provider=PatronForecastProvider(patron=patron, history=binance_history, settings=settings),
@@ -190,6 +213,7 @@ def build_container(
         forecast_automation=forecast_automation,
         chat=chat,
         kie=kie_service,
+        analysis=analysis,
         system=SystemMonitor(),
         started_at=time.time(),
     )

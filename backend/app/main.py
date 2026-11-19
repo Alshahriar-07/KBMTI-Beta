@@ -14,6 +14,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.analysis.service import AnalysisService
 from app.api.v1.router import api_router
 from app.api.ws import ws_router
 from app.container import AppContainer, build_container
@@ -38,6 +39,7 @@ def create_app(
     binance_history: BinanceHistoryClient | None = None,
     patron: PatronInferenceService | None = None,
     kie: KieService | None = None,
+    analysis: AnalysisService | None = None,
     start_polling: bool = True,
     configure_logs: bool = True,
 ) -> FastAPI:
@@ -51,6 +53,7 @@ def create_app(
         binance_history=binance_history,
         patron=patron,
         kie=kie,
+        analysis=analysis,
     )
     container.log_file = log_file
 

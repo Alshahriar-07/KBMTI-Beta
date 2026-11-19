@@ -472,3 +472,84 @@ class ChatRepository:
     def clear_messages(self, conversation_id: str) -> None:
         self._db.execute("DELETE FROM chat_messages WHERE conversation_id = ?", (conversation_id,))
         self.touch_conversation(conversation_id)
+
+
+class MarketSnapshotRepository:
+    """Append-only storage for immutable market-intelligence snapshots.
+
+    The full typed payload is stored as JSON; the scalar columns exist only for
+    scope/time queries and audit. Re-inserting the same deterministic snapshot id
+    is a no-op, so restarts cannot duplicate a snapshot.
+    """
+
+    def __init__(self, db: Database) -> None:
+        self._db = db
+
+    def insert(
+        self,
+        *,
+        snapshot_id: str,
+        symbol: str,
+        timeframe: str,
+        provider: str,
+        generated_at: str,
+        data_as_of: str,
+        is_stale: bool,
+        feature_version: str,
+        validation_status: str,
+        payload: dict[str, Any],
+    ) -> bool:
+        rowcount = self._db.execute(
+            "INSERT INTO market_snapshots "
+            "(snapshot_id, symbol, timeframe, provider, generated_at, data_as_of, is_stale, "
+            "feature_version, validation_status, payload_json, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(snapshot_id) DO NOTHING",
+            (
+                snapshot_id,
+                symbol,
+                timeframe,
+                provider,
+                generated_at,
+                data_as_of,
+                1 if is_stale else 0,
+                feature_version,
+                validation_status,
+                json.dumps(payload, separators=(",", ":"), sort_keys=True),
+                utc_now_iso(),
+            ),
+        )
+        return rowcount == 1
+
+    def latest(self, symbol: str, timeframe: str) -> dict[str, Any] | None:
+        row = self._db.query_one(
+            "SELECT payload_json, created_at FROM market_snapshots "
+            "WHERE symbol = ? AND timeframe = ? ORDER BY data_as_of DESC, created_at DESC LIMIT 1",
+            (symbol.upper(), timeframe.upper()),
+        )
+        if not row:
+            return None
+        payload = json.loads(row["payload_json"])
+        payload["persisted_at"] = row["created_at"]
+        return payload
+
+    def get(self, snapshot_id: str) -> dict[str, Any] | None:
+        row = self._db.query_one(
+            "SELECT payload_json, created_at FROM market_snapshots WHERE snapshot_id = ?",
+            (snapshot_id,),
+        )
+        if not row:
+            return None
+        payload = json.loads(row["payload_json"])
+        payload["persisted_at"] = row["created_at"]
+        return payload
+
+    def count(self, symbol: str | None = None, timeframe: str | None = None) -> int:
+        if symbol and timeframe:
+            row = self._db.query_one(
+                "SELECT COUNT(*) AS total FROM market_snapshots WHERE symbol = ? AND timeframe = ?",
+                (symbol.upper(), timeframe.upper()),
+            )
+        else:
+            row = self._db.query_one("SELECT COUNT(*) AS total FROM market_snapshots")
+        return int(row["total"]) if row else 0

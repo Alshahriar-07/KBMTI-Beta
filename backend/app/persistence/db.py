@@ -193,6 +193,24 @@ SCHEMA_STATEMENTS: tuple[str, ...] = (
     """,
     "CREATE INDEX IF NOT EXISTS idx_kie_runs_created ON kie_runs (created_at DESC)",
     "CREATE INDEX IF NOT EXISTS idx_kie_tool_calls_run ON kie_tool_calls (run_id)",
+    # -- Market intelligence (Phase 1): immutable, auditable snapshot records.
+    """
+    CREATE TABLE IF NOT EXISTS market_snapshots (
+        snapshot_id TEXT PRIMARY KEY,
+        symbol TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        generated_at TEXT NOT NULL,
+        data_as_of TEXT NOT NULL,
+        is_stale INTEGER NOT NULL DEFAULT 0,
+        feature_version TEXT NOT NULL,
+        validation_status TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_market_snapshots_scope "
+    "ON market_snapshots (symbol, timeframe, data_as_of DESC)",
 )
 
 

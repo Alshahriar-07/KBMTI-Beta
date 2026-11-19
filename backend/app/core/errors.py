@@ -87,6 +87,24 @@ class ProviderSelectionError(ApiError):
         super().__init__("PROVIDER_SELECTION_ERROR", message, 422, details)
 
 
+class UnsupportedScopeError(ApiError):
+    """A market-intelligence request outside the approved symbol/timeframe scope."""
+
+    def __init__(self, message: str, details=None):
+        super().__init__("UNSUPPORTED_SCOPE", message, 422, details)
+
+
+class AnalysisUnavailableError(ApiError):
+    """The deterministic analysis service is not available in this process."""
+
+    def __init__(
+        self,
+        message: str = "Deterministic market analysis is not available.",
+        details=None,
+    ):
+        super().__init__("MARKET_ANALYSIS_UNAVAILABLE", message, 503, details)
+
+
 class ForecastUnavailableError(ApiError):
     def __init__(
         self,
