@@ -14,6 +14,7 @@ from app.api.v1 import (
     replay,
     settings,
     signals,
+    strategies,
     system,
 )
 
@@ -22,6 +23,7 @@ api_router.include_router(health.router)
 api_router.include_router(mt5.router)
 api_router.include_router(market.router)
 api_router.include_router(analysis.router)
+api_router.include_router(strategies.router)
 api_router.include_router(indicators.router)
 api_router.include_router(signals.router)
 api_router.include_router(patron.router)

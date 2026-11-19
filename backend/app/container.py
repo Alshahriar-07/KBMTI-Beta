@@ -31,9 +31,11 @@ from app.persistence.repositories import (
     MarketSnapshotRepository,
     SettingsRepository,
     SignalRepository,
+    StrategyEvaluationRepository,
     TickRepository,
 )
 from app.signals.service import SignalService
+from app.strategies.service import StrategyService
 from app.system.monitor import SystemMonitor
 
 logger = logging.getLogger(__name__)
@@ -62,6 +64,7 @@ class AppContainer:
     chat: ChatService
     kie: KieService
     analysis: AnalysisService | None
+    strategies: StrategyService | None
     system: SystemMonitor
     started_at: float
     log_file: Path | None = None
@@ -79,6 +82,7 @@ def build_container(
     patron: PatronInferenceService | None = None,
     kie: KieService | None = None,
     analysis: AnalysisService | None = None,
+    strategies: StrategyService | None = None,
 ) -> AppContainer:
     settings.ensure_dirs()
     db = Database(settings.db_path)
@@ -134,6 +138,17 @@ def build_container(
         except Exception:  # pragma: no cover - construction is intentionally defensive
             logger.exception("Market analysis failed to initialize; continuing without it")
             analysis = None
+    # Strategies depend only on the analysis snapshot; they are optional for the
+    # same reason analysis is: a construction failure must not stop KBMTI.
+    if strategies is None and analysis is not None:
+        try:
+            strategies = StrategyService(
+                analysis=analysis,
+                repository=StrategyEvaluationRepository(db),
+            )
+        except Exception:  # pragma: no cover - construction is intentionally defensive
+            logger.exception("Strategy engine failed to initialize; continuing without it")
+            strategies = None
     signals = SignalService(market=market, repository=signal_repo, settings=settings)
     forecast = ForecastService(
         provider=PatronForecastProvider(patron=patron, history=binance_history, settings=settings),
@@ -214,6 +229,7 @@ def build_container(
         chat=chat,
         kie=kie_service,
         analysis=analysis,
+        strategies=strategies,
         system=SystemMonitor(),
         started_at=time.time(),
     )

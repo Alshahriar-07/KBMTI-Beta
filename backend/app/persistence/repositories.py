@@ -553,3 +553,83 @@ class MarketSnapshotRepository:
         else:
             row = self._db.query_one("SELECT COUNT(*) AS total FROM market_snapshots")
         return int(row["total"]) if row else 0
+
+
+class StrategyEvaluationRepository:
+    """Append-only storage for deterministic strategy evaluations.
+
+    The row columns support filtering and audit; the complete typed payload lives in
+    ``payload_json``. Re-inserting the same deterministic evaluation id is a no-op so
+    polling the same closed bar never grows the table.
+    """
+
+    def __init__(self, db: Database) -> None:
+        self._db = db
+
+    def insert(
+        self,
+        *,
+        evaluation_id: str,
+        strategy_id: str,
+        strategy_version: str,
+        config_version: str,
+        symbol: str,
+        timeframe: str,
+        decision: str,
+        direction: str,
+        quality_score: int,
+        confirmation_status: str,
+        market_snapshot_id: str,
+        data_as_of: str,
+        evaluated_at: str,
+        payload: dict[str, Any],
+    ) -> bool:
+        rowcount = self._db.execute(
+            "INSERT INTO strategy_evaluations "
+            "(evaluation_id, strategy_id, strategy_version, config_version, symbol, timeframe, "
+            "decision, direction, quality_score, confirmation_status, market_snapshot_id, "
+            "data_as_of, evaluated_at, payload_json, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(evaluation_id) DO NOTHING",
+            (
+                evaluation_id,
+                strategy_id,
+                strategy_version,
+                config_version,
+                symbol.upper(),
+                timeframe.upper(),
+                decision,
+                direction,
+                int(quality_score),
+                confirmation_status,
+                market_snapshot_id,
+                data_as_of,
+                evaluated_at,
+                json.dumps(payload, separators=(",", ":"), sort_keys=True),
+                utc_now_iso(),
+            ),
+        )
+        return rowcount == 1
+
+    def latest(self, strategy_id: str, symbol: str, timeframe: str) -> dict[str, Any] | None:
+        row = self._db.query_one(
+            "SELECT payload_json, created_at FROM strategy_evaluations "
+            "WHERE strategy_id = ? AND symbol = ? AND timeframe = ? "
+            "ORDER BY data_as_of DESC, created_at DESC LIMIT 1",
+            (strategy_id, symbol.upper(), timeframe.upper()),
+        )
+        if not row:
+            return None
+        payload = json.loads(row["payload_json"])
+        payload["persisted_at"] = row["created_at"]
+        return payload
+
+    def count(self, strategy_id: str | None = None) -> int:
+        if strategy_id:
+            row = self._db.query_one(
+                "SELECT COUNT(*) AS total FROM strategy_evaluations WHERE strategy_id = ?",
+                (strategy_id,),
+            )
+        else:
+            row = self._db.query_one("SELECT COUNT(*) AS total FROM strategy_evaluations")
+        return int(row["total"]) if row else 0

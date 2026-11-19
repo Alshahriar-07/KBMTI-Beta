@@ -211,6 +211,28 @@ SCHEMA_STATEMENTS: tuple[str, ...] = (
     """,
     "CREATE INDEX IF NOT EXISTS idx_market_snapshots_scope "
     "ON market_snapshots (symbol, timeframe, data_as_of DESC)",
+    # -- Strategy engine (Phase 2): append-only evaluation audit trail.
+    """
+    CREATE TABLE IF NOT EXISTS strategy_evaluations (
+        evaluation_id TEXT PRIMARY KEY,
+        strategy_id TEXT NOT NULL,
+        strategy_version TEXT NOT NULL,
+        config_version TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        decision TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        quality_score INTEGER NOT NULL DEFAULT 0,
+        confirmation_status TEXT NOT NULL,
+        market_snapshot_id TEXT NOT NULL,
+        data_as_of TEXT NOT NULL,
+        evaluated_at TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_strategy_evaluations_scope "
+    "ON strategy_evaluations (strategy_id, symbol, timeframe, data_as_of DESC)",
 )
 
 

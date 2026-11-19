@@ -25,6 +25,7 @@ from app.market_data.binance_history import BinanceHistoryClient
 from app.market_data.mt5_gateway import MT5Gateway
 from app.market_data.providers.binance import BinanceMarketDataProvider
 from app.patron.service import PatronInferenceService
+from app.strategies.service import StrategyService
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from app.kie.service import KieService
@@ -40,6 +41,7 @@ def create_app(
     patron: PatronInferenceService | None = None,
     kie: KieService | None = None,
     analysis: AnalysisService | None = None,
+    strategies: StrategyService | None = None,
     start_polling: bool = True,
     configure_logs: bool = True,
 ) -> FastAPI:
@@ -54,6 +56,7 @@ def create_app(
         patron=patron,
         kie=kie,
         analysis=analysis,
+        strategies=strategies,
     )
     container.log_file = log_file
 

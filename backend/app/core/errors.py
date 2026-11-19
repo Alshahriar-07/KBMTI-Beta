@@ -105,6 +105,17 @@ class AnalysisUnavailableError(ApiError):
         super().__init__("MARKET_ANALYSIS_UNAVAILABLE", message, 503, details)
 
 
+class StrategyUnavailableError(ApiError):
+    """The deterministic strategy service is not available in this process."""
+
+    def __init__(
+        self,
+        message: str = "Deterministic strategy evaluation is not available.",
+        details=None,
+    ) -> None:
+        super().__init__("STRATEGY_UNAVAILABLE", message, 503, details)
+
+
 class ForecastUnavailableError(ApiError):
     def __init__(
         self,
