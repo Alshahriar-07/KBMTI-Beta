@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0B0D0F" />
+    <script>
+      // Resolve the persisted theme before the first paint to avoid a flash.
+      (function () {
+        var theme = "dark";
+        try {
+          var query = new URLSearchParams(window.location.search).get("theme");
+          var stored = window.localStorage.getItem("kbmti.theme");
+          if (query === "light" || query === "dark") theme = query;
+          else if (stored === "light") theme = "light";
+        } catch (error) {
+          theme = "dark";
+        }
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document
+          .querySelector('meta[name="color-scheme"]')
+          .setAttribute("content", theme === "light" ? "light" : "dark");
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute("content", theme === "light" ? "#F4F6F8" : "#0B0D0F");
+      })();
+    </script>
+    <meta
+      name="description"
+      content="KBMTI — PATRON-powered BTC market intelligence, forecasting and research workstation."
+    />
+    <link rel="icon" type="image/svg+xml" href="/brand/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/brand/favicon.png" />
+    <link rel="apple-touch-icon" href="/brand/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>KBMTI — BTC Market Intelligence</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

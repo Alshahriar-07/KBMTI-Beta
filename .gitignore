@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+npm-debug.log*
+
+# Legacy Tauri shell
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# Desktop launcher / packaging artifacts
+build/
+*.spec
+.qt-webengine/
+
+# Local data and runtime artifacts
+.local/
+*.db
+*.db-wal
+*.db-shm
+logs/
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+KBMTI_Full_Project_Plan_v2/
+# --- AI Trading upgrade: local artifacts that must never be committed ---
+backend/models/
+backend/data/
+backend/reports/
+backend/%localappdata%pipcache/
+assets.zip
+.patron-src/
+
+# Independent project copy/backup with its own repository
+/PATROR/
+
+# Environment files (templates are committed)
+.env
+.env.*
+!.env.example
+
+# Virtual environments (all variants)
+.venv*/
+venv*/

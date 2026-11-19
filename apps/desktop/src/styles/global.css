@@ -1,0 +1,309 @@
+@import "tailwindcss";
+
+/*
+ * KBMTI design system — dark quantitative workstation.
+ * The established KBMTI blue (#0969F9) is preserved as the brand hue and
+ * lifted to #4D9AFF for legibility on the dark canvas. Surfaces stay neutral;
+ * green/red are reserved for market direction.
+ */
+@theme {
+  --font-sans:
+    "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: "Cascadia Mono", "Consolas", "SFMono-Regular", ui-monospace, monospace;
+
+  --color-app: #0b0d0f;
+  --color-rail: #101316;
+  --color-surface: #15191d;
+  --color-surface-2: #1b2025;
+  --color-chart: #0e1114;
+
+  --color-line: #292f35;
+  --color-line-soft: #22282e;
+  --color-line-strong: #3a424a;
+
+  --color-ink: #e8eaed;
+  --color-ink-muted: #a0a8b1;
+  --color-ink-faint: #707983;
+
+  --color-primary: #4d9aff;
+  --color-primary-deep: #2f7bff;
+  --color-navy: #101316;
+  --color-navy-deep: #0b0d0f;
+  --color-soft: #1b2025;
+  --color-cool: #707983;
+  --color-light-blue: #172536;
+
+  --color-accent: #4d9aff;
+  --color-accent-ink: #8cbcff;
+  --color-bull: #35b779;
+  --color-bear: #e46b70;
+  --color-warn: #d8a85d;
+  --color-info: #4d9aff;
+
+  --color-primary-ink: #06101f;
+  --color-log: #0b0d0f;
+  --color-log-ink: #a0a8b1;
+  --color-veil: rgba(21, 25, 29, 0.98);
+  --color-scroll-thumb: #343b42;
+  --color-scroll-thumb-hover: #4a535c;
+  --color-selection: rgba(77, 154, 255, 0.25);
+  --color-focus-ring: rgba(77, 154, 255, 0.65);
+  --color-field-ring: rgba(77, 154, 255, 0.12);
+  --color-axis-rule: #3a424a;
+  --color-hover: rgba(232, 234, 237, 0.045);
+}
+
+/*
+ * Light workstation: neutral daylight surfaces with the same information
+ * hierarchy and market colours. Every Tailwind colour token resolves through
+ * these variables, so the whole UI switches without per-component overrides.
+ */
+html[data-theme="light"] {
+  --color-app: #f4f6f8;
+  --color-rail: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8fafc;
+  --color-chart: #ffffff;
+
+  --color-line: #e2e7ed;
+  --color-line-soft: #edf1f5;
+  --color-line-strong: #cbd5e1;
+
+  --color-ink: #171b20;
+  --color-ink-muted: #59636f;
+  --color-ink-faint: #89939e;
+
+  --color-primary: #2f6fdb;
+  --color-primary-deep: #1f5bc4;
+  --color-navy: #ffffff;
+  --color-navy-deep: #f4f6f8;
+  --color-soft: #f8fafc;
+  --color-cool: #59636f;
+  --color-light-blue: #eef4fc;
+
+  --color-accent: #2f6fdb;
+  --color-accent-ink: #1f5bc4;
+  --color-bull: #168653;
+  --color-bear: #d64550;
+  --color-warn: #a96b17;
+  --color-info: #2f6fdb;
+
+  --color-primary-ink: #ffffff;
+  --color-log: #0f1419;
+  --color-log-ink: #b9c3ce;
+  --color-veil: rgba(255, 255, 255, 0.98);
+  --color-scroll-thumb: #c4ced9;
+  --color-scroll-thumb-hover: #aab7c5;
+  --color-selection: rgba(47, 111, 219, 0.18);
+  --color-focus-ring: rgba(47, 111, 219, 0.55);
+  --color-field-ring: rgba(47, 111, 219, 0.12);
+  --color-axis-rule: #d7dfe8;
+  --color-hover: rgba(23, 27, 32, 0.045);
+  color-scheme: light;
+}
+
+html {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line-soft);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-app);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.5;
+    font-feature-settings: "cv05", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow: hidden;
+  }
+
+  .lucide {
+    stroke-width: 1.6;
+  }
+
+  ::selection {
+    background: var(--color-selection);
+    color: var(--color-ink);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-scroll-thumb);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scroll-thumb-hover);
+    background-clip: content-box;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  button,
+  [role="button"],
+  select {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .num {
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+  }
+
+  .label-xs {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.015em;
+    color: var(--color-ink-faint);
+  }
+
+  .scroll-area {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
+  .field {
+    height: 32px;
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: 7px;
+    background: var(--color-surface-2);
+    padding: 0 10px;
+    color: var(--color-ink);
+    font-size: 11.5px;
+    transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .field:hover {
+    border-color: var(--color-line-strong);
+    background: var(--color-surface);
+  }
+
+  .field:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-field-ring);
+    outline: none;
+  }
+
+  /* Transient overlays: solid, quiet surfaces with a short opening motion. */
+  .glass-veil {
+    background: var(--color-veil);
+    border: 1px solid var(--color-line);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.16),
+      0 14px 30px -20px rgba(0, 0, 0, 0.72);
+    animation: menu-in 120ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    transform-origin: top right;
+  }
+
+  .rail-tooltip {
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    z-index: 40;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    border: 1px solid var(--color-line);
+    border-radius: 7px;
+    background: var(--color-surface);
+    padding: 5px 9px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-ink);
+    box-shadow: 0 8px 22px -16px rgba(0, 0, 0, 0.72);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+  }
+
+  .group\/nav:hover .rail-tooltip {
+    opacity: 1;
+  }
+
+  .meter-track {
+    height: 3px;
+    background: var(--color-surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .axis-rule {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-axis-rule) 0,
+      var(--color-axis-rule) 1px,
+      transparent 1px,
+      transparent 12.5%
+    );
+  }
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes forecast-in {
+  from {
+    opacity: 0.35;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.forecast-enter {
+  animation: forecast-in 220ms ease-out;
+}

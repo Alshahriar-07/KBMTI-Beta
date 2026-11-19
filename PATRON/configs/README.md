@@ -1,0 +1,1 @@
+PATRON reads `model_config.yaml` for the model/training contract and `runtime.yaml` for autonomous-runtime policy. Inference has no separate config: it uses the checkpoint's embedded config plus CLI flags (`--checkpoint`, `--input`, `--warmup`, `--output`).

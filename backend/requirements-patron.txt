@@ -1,0 +1,11 @@
+# PATRON runtime (CPU only). Install after requirements.txt:
+#   backend/.venv/Scripts/python -m pip install -r requirements-patron.txt
+#
+# torch is pinned because PATRON v1.0.0-beta.1 was verified with 2.4.1+cpu.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.4.1
+pyarrow>=15.0
+jsonschema>=4.20
+PyYAML>=6.0
+scikit-learn>=1.4
+../PATRON/patron-1.0.0b1-py3-none-any.whl

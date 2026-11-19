@@ -1,0 +1,59 @@
+{
+  "release": "PATRON-v1.0.0-beta.1",
+  "release_version": "1.0.0-beta.1",
+  "package_version": "1.0.0b1",
+  "built_at": "2026-11-15T13:04:04Z",
+  "built_on": {
+    "python": "3.12.10",
+    "platform": "win32"
+  },
+  "git": {
+    "commit": "3ce423142e36dc9615c78f4e7b64712b4f928865",
+    "branch": "main",
+    "dirty": true
+  },
+  "file_count": 162,
+  "archives": {
+    "PATRON-v1.0.0-beta.1-source.zip": {
+      "sha256": "8f8a4e35237255e4a471fecb8ac4eae92c86a5e8156c99ab9ce391476d66b21f",
+      "bytes": 363691
+    },
+    "PATRON-v1.0.0-beta.1-source.tar.gz": {
+      "sha256": "8b1ab0dbde3b39ef8e2b1b676e81a7ac098f488a0c00dae2da7fd5933821cf01",
+      "bytes": 287700
+    }
+  },
+  "packages": {
+    "patron-1.0.0b1-py3-none-any.whl": {
+      "sha256": "e583c159f5461e4eaf6a365d6b996652c508683a6ea47057a45bc9902e265c9f",
+      "bytes": 176124
+    },
+    "patron-1.0.0b1.tar.gz": {
+      "sha256": "dcb25f5f4c5b1c47c3637cbd9d5c08a025b41aa46eeec8865e7afdefe852ec8e",
+      "bytes": 181755
+    }
+  },
+  "excluded": [
+    ".git",
+    ".idea",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    ".vscode",
+    "Plan",
+    "__pycache__",
+    "build",
+    "data",
+    "dist",
+    "experiments",
+    "logs",
+    "node_modules",
+    "reports",
+    "venv"
+  ],
+  "verification": {
+    "staging_scan": "clean",
+    "archive_members_match": true
+  }
+}

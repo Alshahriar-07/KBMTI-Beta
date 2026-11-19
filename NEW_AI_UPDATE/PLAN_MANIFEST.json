@@ -1,0 +1,29 @@
+{
+  "plan_name": "KBMTI AI Trading Intelligence Upgrade",
+  "version": "1.0",
+  "date": "2026-11-19",
+  "documents": [
+    "README.md",
+    "01_MASTER_UPDATE_PLAN.md",
+    "02_TARGET_ARCHITECTURE.md",
+    "03_QWEN_TRADING_INTELLIGENCE_TRAINING.md",
+    "04_DATASET_AND_LABELING_SPEC.md",
+    "05_STRATEGY_ENGINE_SPEC.md",
+    "06_TRADE_RISK_AND_MANAGEMENT_SPEC.md",
+    "07_TRADING_UI_UX_SPEC.md",
+    "08_TRADE_OUTCOME_AND_FAILURE_ANALYSIS.md",
+    "09_CONTINUOUS_LEARNING_AND_RETRAINING.md",
+    "10_BACKTESTING_AND_RELEASE_GATES.md",
+    "11_API_AND_EVENT_CONTRACTS.md",
+    "12_IMPLEMENTATION_ROADMAP.md",
+    "13_SAFETY_AND_PERMISSION_RULES.md",
+    "14_ACCEPTANCE_TESTS.md"
+  ],
+  "constraints": {
+    "patron_scope": "forecasting_only_unchanged",
+    "qwen_model": "Qwen3-4B",
+    "inference": "existing_embedded_llama_cpp_runtime",
+    "automatic_live_execution": false,
+    "automatic_production_retraining": false
+  }
+}

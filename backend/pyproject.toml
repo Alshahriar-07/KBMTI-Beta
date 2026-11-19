@@ -1,0 +1,23 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Real-runtime checks load the 2.4 GB GGUF and touch the GPU, so they are opt-in:
+#   .venv/Scripts/python.exe -m pytest -m kie_runtime
+addopts = "-q -m 'not kie_runtime'"
+markers = [
+    "kie_runtime: loads the real pinned model and runtime (slow, needs the artifacts)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
