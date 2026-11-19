@@ -12,7 +12,7 @@ the existing API/UI contracts. No automatic order execution exists or will be ad
 |---|---|---|
 | 0 | Repository audit, architecture map, gap analysis, task plan | **Complete** — approved as the baseline |
 | 1 | Market intelligence foundation: BTCUSDT M15 snapshot, trend, structure, momentum, volatility, regime, liquidity, persistence, two read-only endpoints | **Complete, pending gate review** |
-| 2 | Strategy registry and candidate engine (`trend_pullback` first) | Not started |
+| 2 | Strategy registry and candidate engine (`trend_pullback` first) | **Implementation complete** — 60-case gate PENDING |
 | 3 | Trade planner, validation and risk engine | Not started |
 | 4 | Qwen trading intelligence: read-only tools, validator, deterministic retrieval | Not started |
 | 5 | AI trading assistant UI and chart overlays | Not started |
@@ -31,6 +31,8 @@ the existing API/UI contracts. No automatic order execution exists or will be ad
 | [`IMPLEMENTATION_TASKS.md`](IMPLEMENTATION_TASKS.md) | Phase task list, gates, test matrices, deferred backlog |
 | [`PHASE_0_RESULTS.md`](PHASE_0_RESULTS.md) | Audit completion report and approved decisions |
 | [`PHASE_1_RESULTS.md`](PHASE_1_RESULTS.md) | Market intelligence implementation, tests, measurements, limitations |
+| [`PHASE_2_RESULTS.md`](PHASE_2_RESULTS.md) | Strategy engine implementation, rules, tests, provisional evaluation, PENDING gate |
+| [`PHASE_2_EVALUATION.json`](PHASE_2_EVALUATION.json) | Provisional historical metrics and the 60 exported (unreviewed) gate cases |
 
 ## Approved decisions (locked)
 
@@ -52,7 +54,13 @@ PYTHONPATH=. .venv/Scripts/python.exe -m pytest
 .venv/Scripts/python.exe -m ruff check app tests scripts
 ```
 
-The real-model KIE test remains opt-in (`-m kie_runtime`) and is not part of Phase 1.
+The real-model KIE test remains opt-in (`-m kie_runtime`) and is not part of Phase 1 or 2.
+The provisional strategy evaluation is separate and read-only:
+
+```bash
+cd backend
+PYTHONPATH=. .venv/Scripts/python.exe scripts/evaluate_trend_pullback.py
+```
 
 ## Non-negotiable boundaries
 

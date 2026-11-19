@@ -1,0 +1,2128 @@
+{
+  "report_version": "phase2-provisional-1.0.0",
+  "generated_at": "2026-11-19T08:09:25.912397+00:00",
+  "strategy": {
+    "strategy_id": "trend_pullback",
+    "strategy_version": "1.0.0"
+  },
+  "dataset": {
+    "symbol": "BTCUSDT",
+    "timeframe": "M15",
+    "candles": 100930,
+    "first_candle": "2024-01-01T00:00:00+00:00",
+    "last_candle": "2026-11-17T08:15:00+00:00",
+    "source_sha256": "a7293430cafe534feffc1a351ae38a1f68124d9a87f8a91f7383c94585dc4ae3",
+    "file": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\backend\\data\\patron\\BTCUSDT_15m.parquet",
+    "sha256": "5eb3289b32b5980d47f5af20be99484e16d9be8aa32b5f4bec12c965aa22458b"
+  },
+  "sampling": {
+    "method": "chronological fixed stride; no randomisation, no peeking",
+    "stride_bars": 48,
+    "warmup_bars": 200,
+    "evaluated_bars": 2099
+  },
+  "label_definition": "Labels are computed only after the evaluation: for a LONG candidate the bar is a hit when close at t+horizon is above close at t, and a miss when it is below; SHORT is the mirror. Forward return is (close[t+horizon]-close[t])/close[t]*100 in the candidate's direction. Max favourable/adverse excursion measures the high/low path in ATR units and is a measurement only, not an entry/stop rule. These are algorithmic labels, not reviewed trades.",
+  "counts": {
+    "LONG": 0,
+    "SHORT": 1,
+    "WAIT": 306,
+    "NO_TRADE": 1792
+  },
+  "quality": {
+    "candidate_count": 1,
+    "histogram": {
+      "LOW": 0,
+      "MEDIUM": 0,
+      "HIGH": 1
+    },
+    "mean_candidate_score": 85.0
+  },
+  "decisions_by_regime": {
+    "HIGH_VOLATILITY": {
+      "LONG": 0,
+      "SHORT": 0,
+      "WAIT": 0,
+      "NO_TRADE": 401
+    },
+    "RANGING": {
+      "LONG": 0,
+      "SHORT": 0,
+      "WAIT": 0,
+      "NO_TRADE": 260
+    },
+    "TRENDING_DOWN": {
+      "LONG": 0,
+      "SHORT": 1,
+      "WAIT": 146,
+      "NO_TRADE": 94
+    },
+    "TRENDING_UP": {
+      "LONG": 0,
+      "SHORT": 0,
+      "WAIT": 160,
+      "NO_TRADE": 94
+    },
+    "UNCERTAIN": {
+      "LONG": 0,
+      "SHORT": 0,
+      "WAIT": 0,
+      "NO_TRADE": 943
+    }
+  },
+  "rejection_codes": {
+    "NO_ESTABLISHED_TREND": 387,
+    "PULLBACK_TOO_DEEP": 13,
+    "REGIME_INCOMPATIBLE": 1217,
+    "RESISTANCE_TOO_CLOSE": 2,
+    "STRUCTURE_INVALIDATED": 92,
+    "VOLATILITY_INCOMPATIBLE": 81
+  },
+  "wait_codes": {
+    "AWAITING_MOMENTUM_CONFIRMATION": 31,
+    "AWAITING_RECLAIM": 11,
+    "PULLBACK_NOT_PRESENT": 264
+  },
+  "outcomes": {
+    "horizon_bars": 16,
+    "candidate_count": 1,
+    "hit_rate_all_candidates": 0.0,
+    "hit_rate_long": null,
+    "hit_rate_short": 0.0,
+    "false_positive_count": 1,
+    "false_positive_rate": 1.0,
+    "mean_directional_return_pct": -0.0229,
+    "median_directional_return_pct": -0.0229,
+    "mean_max_favourable_atr": 0.5348,
+    "mean_max_adverse_atr": 1.1289
+  },
+  "missed_opportunities": {
+    "material_move_atr": 1.0,
+    "wait_with_material_move": 205,
+    "no_trade_with_material_move": 1172,
+    "note": "A material move after WAIT/NO_TRADE is a missed opportunity only in hindsight; it is not counted as an error because the strategy intentionally declines unclear setups."
+  },
+  "evidence_completeness": {
+    "records": 2099,
+    "complete_records": 2099,
+    "completeness_rate": 1.0,
+    "mean_evidence_items": 3.6232
+  },
+  "gate": {
+    "required_cases": 60,
+    "exported_cases": 60,
+    "reviewed_cases": 0,
+    "status": "PENDING",
+    "reason": "No independent human review of the 60 exported cases has been performed. The gate must not be reported as passed on algorithmic labels alone."
+  },
+  "case_selection": {
+    "method": "Deterministic stratified sample: every candidate (capped at the limit), then evenly spaced WAIT decisions, then evenly spaced NO_TRADE decisions in chronological order.",
+    "budget": {
+      "candidates": 1,
+      "wait": 29,
+      "no_trade": 30
+    }
+  },
+  "limitations": [
+    "Single synthetic/local dataset; not a live-trading sample.",
+    "Algorithmic labels only; no independent review.",
+    "No fees, funding, slippage or order-fill simulation.",
+    "Fixed-stride sampling keeps runtime bounded but still overlaps forward windows.",
+    "The strategy emits no entry, stop or target, so no trade PnL is claimed."
+  ],
+  "cases": [
+    {
+      "case": 1,
+      "candle_time": "2024-01-03T02:00:00+00:00",
+      "evaluation_id": "evl_88e69f0bbed481a1e539be48",
+      "snapshot_id": "mkt_803224fc32fe3b5689431815248d",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.4185
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 2,
+      "candle_time": "2024-01-07T14:00:00+00:00",
+      "evaluation_id": "evl_a9f21f6198ae278ac5734cd2",
+      "snapshot_id": "mkt_a6e94d381c040cf67dfbed187612",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 2.6022
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 3,
+      "candle_time": "2024-02-08T02:00:00+00:00",
+      "evaluation_id": "evl_b52b3c21a119e13dc77b4fa0",
+      "snapshot_id": "mkt_11d3e14d2f0a8fe47170c18c2d7e",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.7761
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 4,
+      "candle_time": "2024-02-15T02:00:00+00:00",
+      "evaluation_id": "evl_3a786b8ce14add6cd9ed5abe",
+      "snapshot_id": "mkt_5a2b2b26dc5883e563c348965eec",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.6466
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 5,
+      "candle_time": "2024-03-15T14:00:00+00:00",
+      "evaluation_id": "evl_f7745e61f5fde5d3622f8081",
+      "snapshot_id": "mkt_592cb502d01ed1beb9e564e6ecf9",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.6502
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 6,
+      "candle_time": "2024-03-24T02:00:00+00:00",
+      "evaluation_id": "evl_931417391fdd7e48a96b3d25",
+      "snapshot_id": "mkt_6b1838af9da6c971dece1ac3bd58",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.5039
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 7,
+      "candle_time": "2024-04-18T02:00:00+00:00",
+      "evaluation_id": "evl_eebd11d6e0e68d6316aa66ea",
+      "snapshot_id": "mkt_f013c8ef5166dd7fa0b2539d73e7",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.5633
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 8,
+      "candle_time": "2024-04-22T02:00:00+00:00",
+      "evaluation_id": "evl_23f0340a57533f00ca128dd5",
+      "snapshot_id": "mkt_74a1b5d324113d4f131ba4e522fa",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 5.6384
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 9,
+      "candle_time": "2024-05-27T14:00:00+00:00",
+      "evaluation_id": "evl_c49224a818777798f27b237b",
+      "snapshot_id": "mkt_befb21a1ea2e998c605b301094bc",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "RANGING",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 7.4691
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 10,
+      "candle_time": "2024-05-30T14:00:00+00:00",
+      "evaluation_id": "evl_3845138048824241c4b006ce",
+      "snapshot_id": "mkt_e20278a2a5c6754f5200818d1a8e",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 2.8726
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 11,
+      "candle_time": "2024-07-02T02:00:00+00:00",
+      "evaluation_id": "evl_bcb0e74731069bfa0214c580",
+      "snapshot_id": "mkt_8c6ed86eac0c03539d65b24e8d59",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BEARISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.1188
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 12,
+      "candle_time": "2024-07-07T02:00:00+00:00",
+      "evaluation_id": "evl_63ddcb80820726aeb30fd0f8",
+      "snapshot_id": "mkt_6241f825f8e0efb5d5c899a5488c",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.02
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 13,
+      "candle_time": "2024-08-03T02:00:00+00:00",
+      "evaluation_id": "evl_e8ae0bca8858232e0e2bfe1f",
+      "snapshot_id": "mkt_b1e599c5874bc5c3c5548be01ced",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.78
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 14,
+      "candle_time": "2024-08-09T02:00:00+00:00",
+      "evaluation_id": "evl_878a2b1a697bbf2ef5fb281e",
+      "snapshot_id": "mkt_d63e5ef662169ab9a4766c5590f9",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.0826
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 15,
+      "candle_time": "2024-09-13T02:00:00+00:00",
+      "evaluation_id": "evl_af1fbdaf2b0934c88dc18e1d",
+      "snapshot_id": "mkt_a907663d2eb95fd362878dd2218a",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BEARISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.7987
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 16,
+      "candle_time": "2024-09-15T02:00:00+00:00",
+      "evaluation_id": "evl_01374da4946e3f810f1d688c",
+      "snapshot_id": "mkt_8e1d8a5c5eff84410a5eba29f639",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.2739
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 17,
+      "candle_time": "2024-10-19T14:00:00+00:00",
+      "evaluation_id": "evl_c9abc8c8dd4737fe11d0aba0",
+      "snapshot_id": "mkt_d02209b4d85643102f97b695ef85",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.3211
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 18,
+      "candle_time": "2024-10-24T02:00:00+00:00",
+      "evaluation_id": "evl_74dc1f77e01bc7bac866c4fa",
+      "snapshot_id": "mkt_5f15b59c6bd9e8a71aa6e60b6463",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.6734
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 19,
+      "candle_time": "2024-11-24T02:00:00+00:00",
+      "evaluation_id": "evl_5673e7554d2b9b91673580e9",
+      "snapshot_id": "mkt_17c6bd59dc864af7a948caccea63",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.2773
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 20,
+      "candle_time": "2024-11-29T14:00:00+00:00",
+      "evaluation_id": "evl_d609c12dc0bd2cc5115c6304",
+      "snapshot_id": "mkt_fb8b5840c89a1c81bdce81ceb588",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.3044
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 21,
+      "candle_time": "2024-12-31T14:00:00+00:00",
+      "evaluation_id": "evl_7be0f656ee21fd92921265e8",
+      "snapshot_id": "mkt_b6fdcd2313a01305847d0dd47c80",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 4.5614
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 22,
+      "candle_time": "2025-01-01T14:00:00+00:00",
+      "evaluation_id": "evl_da09c11b9e8bcfc3dcd5b163",
+      "snapshot_id": "mkt_18f0c8b023aa29ba7b25c4f859ce",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.0646
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 23,
+      "candle_time": "2025-01-17T14:00:00+00:00",
+      "evaluation_id": "evl_d980c7dd560db85a438331e7",
+      "snapshot_id": "mkt_4c7d71fce5ad3704b9aebf4ab3a3",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 6.3909
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 24,
+      "candle_time": "2025-02-09T02:00:00+00:00",
+      "evaluation_id": "evl_717a1e090c236e12e0f284d0",
+      "snapshot_id": "mkt_a0d3ca0451ffa55a1dccf3aaee29",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.1503
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 25,
+      "candle_time": "2025-02-28T14:00:00+00:00",
+      "evaluation_id": "evl_0a6fc9e1f78c691c2f1e65c3",
+      "snapshot_id": "mkt_4fa30540ff7991406d224d64ba40",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.1474
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 26,
+      "candle_time": "2025-03-16T14:00:00+00:00",
+      "evaluation_id": "evl_3e73da3da7f08cb9afdcf254",
+      "snapshot_id": "mkt_3050c83cb7ffc4cb0cf42621749b",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "RANGING",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 4.1622
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 27,
+      "candle_time": "2025-04-02T02:00:00+00:00",
+      "evaluation_id": "evl_8fb14f4aaca89fa6a42a494d",
+      "snapshot_id": "mkt_16ce216cd64be421b73a9ded7faa",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.0528
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 28,
+      "candle_time": "2025-04-21T02:00:00+00:00",
+      "evaluation_id": "evl_414ea61c14ac14c3ace08788",
+      "snapshot_id": "mkt_7ad450e3023b6da9256f0c1e5da3",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "RANGING",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.7323
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 29,
+      "candle_time": "2025-05-24T02:00:00+00:00",
+      "evaluation_id": "evl_578da2823e5263a6879da768",
+      "snapshot_id": "mkt_d7a8e222b6d9ea57ab7cc66c33b0",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.6579
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 30,
+      "candle_time": "2025-05-26T14:00:00+00:00",
+      "evaluation_id": "evl_8592840a67c79b4a720309ac",
+      "snapshot_id": "mkt_0909c19f61a2ad49a345d4d5572c",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "NEUTRAL",
+      "structure_state": "RANGING",
+      "regime_state": "RANGING",
+      "rejection_codes": [
+        "NO_ESTABLISHED_TREND"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.9584
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 31,
+      "candle_time": "2025-06-29T14:00:00+00:00",
+      "evaluation_id": "evl_e96a7693f1bfc737c25fb3d8",
+      "snapshot_id": "mkt_aa520d7dad745b3ed44e02d68b78",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "RANGING",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 5.2934
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 32,
+      "candle_time": "2025-07-19T02:00:00+00:00",
+      "evaluation_id": "evl_30fb6e11ca6933c014cf7edc",
+      "snapshot_id": "mkt_5946a567cb32bd3a55f5f20207b1",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.8078
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 33,
+      "candle_time": "2025-08-02T02:00:00+00:00",
+      "evaluation_id": "evl_eaa140386ca7f0d4546e5d48",
+      "snapshot_id": "mkt_dd2d12becd41febac9fe80761524",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "NEUTRAL",
+      "structure_state": "UPTREND",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "NO_ESTABLISHED_TREND"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.3
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 34,
+      "candle_time": "2025-09-06T02:00:00+00:00",
+      "evaluation_id": "evl_45d0a3833ff2385118b8240f",
+      "snapshot_id": "mkt_ea9294f571b732483662824fd124",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.4628
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 35,
+      "candle_time": "2025-09-10T02:00:00+00:00",
+      "evaluation_id": "evl_82f1f6ece2f0635d66aa4ded",
+      "snapshot_id": "mkt_b1154e18822a11bf6939efec33b4",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "AWAITING_RECLAIM"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION",
+        "MOMENTUM"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.0951
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 36,
+      "candle_time": "2025-10-11T14:00:00+00:00",
+      "evaluation_id": "evl_487159ba127c52f7bc6516f4",
+      "snapshot_id": "mkt_6de8bcead37d70c1ea55aec813e1",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.8184
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 37,
+      "candle_time": "2025-10-20T02:00:00+00:00",
+      "evaluation_id": "evl_7d5c51b7744c2bcdc90a3619",
+      "snapshot_id": "mkt_6b55c225ea88a6625869025364bc",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 10.2463
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 38,
+      "candle_time": "2025-11-17T02:00:00+00:00",
+      "evaluation_id": "evl_06329292468594e77f4d0bbf",
+      "snapshot_id": "mkt_cbd25888fb730474ebd6062caf50",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BULLISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.7017
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 39,
+      "candle_time": "2025-11-28T02:00:00+00:00",
+      "evaluation_id": "evl_d22166cb25dc894487f76949",
+      "snapshot_id": "mkt_2e284e470c44e764a58e23f8a341",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 2.3745
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 40,
+      "candle_time": "2025-12-13T02:00:00+00:00",
+      "evaluation_id": "evl_057e128d506dde4129e10166",
+      "snapshot_id": "mkt_317c6d3f8621e049cd048508c9b6",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "SHORT",
+      "direction": "SHORT",
+      "quality_score": 85,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION",
+        "MOMENTUM",
+        "CONFIRMATION"
+      ],
+      "algorithmic_label": {
+        "hit": false,
+        "directional_return_pct": -0.022893,
+        "move_atr": 0.1302
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 41,
+      "candle_time": "2025-12-24T02:00:00+00:00",
+      "evaluation_id": "evl_308388844f72380542336b7d",
+      "snapshot_id": "mkt_e195f852b14c6110b76c324ce21a",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 2.1557
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 42,
+      "candle_time": "2025-12-28T14:00:00+00:00",
+      "evaluation_id": "evl_394c718d5841a9aeba5767d9",
+      "snapshot_id": "mkt_c282cd98d161317e0d7937376e25",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.793
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 43,
+      "candle_time": "2026-01-28T02:00:00+00:00",
+      "evaluation_id": "evl_e1f560f7ff5a563e08368c24",
+      "snapshot_id": "mkt_d4986e159ba1f62e5795bf1ff543",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.1764
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 44,
+      "candle_time": "2026-02-06T14:00:00+00:00",
+      "evaluation_id": "evl_21209e999dcc0cf74c5323b5",
+      "snapshot_id": "mkt_3709485250e4c2bc87f63a6f5958",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 5.8568
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 45,
+      "candle_time": "2026-03-03T14:00:00+00:00",
+      "evaluation_id": "evl_db0171d0580b635e7b7803e4",
+      "snapshot_id": "mkt_455dbfd15c297b2b21bd16b80f71",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "AWAITING_MOMENTUM_CONFIRMATION"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION",
+        "MOMENTUM"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 2.8008
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 46,
+      "candle_time": "2026-03-09T02:00:00+00:00",
+      "evaluation_id": "evl_e3082bdfce6fc84c1884f7ac",
+      "snapshot_id": "mkt_d17d81aa3c788f96d020ec31efc9",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "RANGING",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.8985
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 47,
+      "candle_time": "2026-03-23T14:00:00+00:00",
+      "evaluation_id": "evl_093484ff409563a4b44bbd9b",
+      "snapshot_id": "mkt_0b178d1a4eafc7a77078c95aa7c3",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.0872
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 48,
+      "candle_time": "2026-04-16T02:00:00+00:00",
+      "evaluation_id": "evl_ad35d51cfa5af6c3132ee69f",
+      "snapshot_id": "mkt_4fb014db3af4e5682e9f266088bb",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "NEUTRAL",
+      "structure_state": "TRANSITION",
+      "regime_state": "RANGING",
+      "rejection_codes": [
+        "NO_ESTABLISHED_TREND"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.5046
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 49,
+      "candle_time": "2026-05-09T14:00:00+00:00",
+      "evaluation_id": "evl_18ae4f336df5675c85ca7ad9",
+      "snapshot_id": "mkt_76e7d205003d88cf20acde66df35",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 6.0331
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 50,
+      "candle_time": "2026-05-22T02:00:00+00:00",
+      "evaluation_id": "evl_9419c3ca9701e034661b7729",
+      "snapshot_id": "mkt_25bd5c1592f0b3eb2cfbd791a4c9",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "NEUTRAL",
+      "structure_state": "DOWNTREND",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "NO_ESTABLISHED_TREND"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 1.2389
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 51,
+      "candle_time": "2026-06-05T14:00:00+00:00",
+      "evaluation_id": "evl_cbdf224ef0e8cc4dcc09df39",
+      "snapshot_id": "mkt_c7fc116696030d64c5f094fec767",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.4889
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 52,
+      "candle_time": "2026-06-26T02:00:00+00:00",
+      "evaluation_id": "evl_25eedd961d7a0ceb69eb5eaf",
+      "snapshot_id": "mkt_18142c9d98170f4d30283f5bf8c4",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "RANGING",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.6206
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 53,
+      "candle_time": "2026-07-30T14:00:00+00:00",
+      "evaluation_id": "evl_f0351448b9ba1e002f788686",
+      "snapshot_id": "mkt_cce30eee6d3812742ca5f3269ec5",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BULLISH",
+      "structure_state": "UPTREND",
+      "regime_state": "TRENDING_UP",
+      "rejection_codes": [
+        "STRUCTURE_INVALIDATED"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.5514
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 54,
+      "candle_time": "2026-08-06T02:00:00+00:00",
+      "evaluation_id": "evl_cd762e1fdbe4f1ec86a218ce",
+      "snapshot_id": "mkt_a4ee61a5177b84d13f0bc920d034",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 2.1265
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 55,
+      "candle_time": "2026-08-31T14:00:00+00:00",
+      "evaluation_id": "evl_3bbea61d88f59ffb2ac522fc",
+      "snapshot_id": "mkt_34b19fae5f7ace109a89236a7318",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 4.1734
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 56,
+      "candle_time": "2026-09-05T14:00:00+00:00",
+      "evaluation_id": "evl_e3df68524f88a4039aeea633",
+      "snapshot_id": "mkt_e7f60c92f9323a2abab4f14725f5",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "NEUTRAL",
+      "structure_state": "TRANSITION",
+      "regime_state": "RANGING",
+      "rejection_codes": [
+        "NO_ESTABLISHED_TREND"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 4.4531
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 57,
+      "candle_time": "2026-09-29T02:00:00+00:00",
+      "evaluation_id": "evl_d08a3b801ec58f14e51b0a03",
+      "snapshot_id": "mkt_7c7b7af30ab3daf5ddb724ba629e",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 4.4524
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 58,
+      "candle_time": "2026-10-13T02:00:00+00:00",
+      "evaluation_id": "evl_082637bf3db2d87866055765",
+      "snapshot_id": "mkt_70b580ce1282235ac9988ec3923b",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "NEUTRAL",
+      "structure_state": "RANGING",
+      "regime_state": "HIGH_VOLATILITY",
+      "rejection_codes": [
+        "NO_ESTABLISHED_TREND"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 3.0398
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 59,
+      "candle_time": "2026-11-13T02:00:00+00:00",
+      "evaluation_id": "evl_a02cd940911bbabd7c5b23da",
+      "snapshot_id": "mkt_e081fab02c68aee2912c8a0227ba",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "WAIT",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "DOWNTREND",
+      "regime_state": "TRENDING_DOWN",
+      "rejection_codes": [],
+      "wait_codes": [
+        "PULLBACK_NOT_PRESENT"
+      ],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME",
+        "PULLBACK_LOCATION"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 8.2758
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    },
+    {
+      "case": 60,
+      "candle_time": "2026-11-17T02:00:00+00:00",
+      "evaluation_id": "evl_dd064dd73562e23841399b3d",
+      "snapshot_id": "mkt_b31dae013b11c007885a98886050",
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "NO_TRADE",
+      "direction": "NONE",
+      "quality_score": 0,
+      "trend_state": "STRONG_BEARISH",
+      "structure_state": "TRANSITION",
+      "regime_state": "UNCERTAIN",
+      "rejection_codes": [
+        "REGIME_INCOMPATIBLE"
+      ],
+      "wait_codes": [],
+      "evidence_codes": [
+        "MARKET_SNAPSHOT",
+        "TREND_ALIGNED",
+        "STRUCTURE_STATE",
+        "REGIME"
+      ],
+      "algorithmic_label": {
+        "hit": null,
+        "directional_return_pct": null,
+        "move_atr": 0.5804
+      },
+      "review_status": "PENDING",
+      "reviewer": null,
+      "reviewed_decision": null,
+      "review_notes": null
+    }
+  ]
+}
