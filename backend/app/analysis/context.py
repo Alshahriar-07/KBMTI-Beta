@@ -126,6 +126,7 @@ class MarketContextBuilder:
         if not errors:
             checks.append("ohlcv_integrity")
 
+        warnings.extend(errors)
         warmup_complete = len(eligible) >= MIN_ANALYSIS_BARS
         if warmup_complete:
             checks.append("minimum_warmup")
