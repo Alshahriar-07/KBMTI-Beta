@@ -233,6 +233,7 @@ def context_from_snapshot(snapshot: MarketSnapshot) -> MarketContextResponse:
         is_stale=snapshot.is_stale,
         feature_version=snapshot.feature_version,
         scope=snapshot.scope,
+        provenance=snapshot.provenance,
         validation=snapshot.validation,
         last_price=snapshot.last_price,
         trend_state=snapshot.trend.state,

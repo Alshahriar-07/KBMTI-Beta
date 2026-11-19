@@ -340,6 +340,7 @@ class MarketContextResponse(StrictModel):
     is_stale: bool
     feature_version: str
     scope: SnapshotScope
+    provenance: DataProvenance
     validation: ValidationState
     last_price: float
     trend_state: TrendState

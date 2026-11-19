@@ -35,6 +35,8 @@ def test_market_context_endpoint(make_client, analysis_service) -> None:  # type
     assert body["structure_state"] == "UPTREND"
     assert body["regime_state"] == "TRENDING_UP"
     assert body["data_as_of"] and body["generated_at"]
+    assert body["provenance"]["source"] == "fixture"
+    assert body["provenance"]["candle_count"] == 180
     assert body["feature_version"]
     assert body["snapshot_id"].startswith("mkt_")
     assert body["warnings"] == [] or isinstance(body["warnings"], list)
