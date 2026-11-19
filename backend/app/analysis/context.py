@@ -44,6 +44,7 @@ from app.core.errors import MarketDataUnavailableError, UnsupportedScopeError
 from app.indicators.engine import compute_indicators
 from app.market_data.candles import Candle
 
+
 class MarketContextBuilder:
     def __init__(
         self,

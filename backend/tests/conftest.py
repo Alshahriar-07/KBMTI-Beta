@@ -51,6 +51,7 @@ def make_client(settings: Settings, terminal_exe: Path):
         app = create_app(
             settings=kwargs.pop("settings", settings),
             gateway=gateway or MT5Gateway(module=FakeMT5(), terminal_path=str(terminal_exe)),
+            analysis=kwargs.pop("analysis", None),
             start_polling=False,
             configure_logs=False,
         )

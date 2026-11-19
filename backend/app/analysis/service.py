@@ -14,6 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from app.analysis.context import MarketContextBuilder
 from app.analysis.contracts import (
     FEATURE_VERSION,
     MAX_ANALYSIS_BARS,
@@ -27,7 +28,6 @@ from app.analysis.contracts import (
     ValidationStatus,
     scope_for,
 )
-from app.analysis.context import MarketContextBuilder
 from app.analysis.sources import CandleSource
 from app.core.config import Settings
 from app.core.errors import UnsupportedScopeError

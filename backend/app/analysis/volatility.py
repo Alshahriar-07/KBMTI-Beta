@@ -54,7 +54,7 @@ def _realized_volatility_percent(candles: list[Candle]) -> float | None:
     if len(window) < REALIZED_VOL_WINDOW + 1:
         return None
     returns: list[float] = []
-    for previous, current in zip(window, window[1:]):
+    for previous, current in zip(window, window[1:], strict=False):
         if previous.close <= 0 or current.close <= 0:
             return None
         returns.append(math.log(float(current.close) / float(previous.close)))

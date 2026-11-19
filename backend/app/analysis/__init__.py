@@ -1,5 +1,6 @@
 """Deterministic market intelligence for the approved BTCUSDT M15 scope."""
 
+from app.analysis.context import MarketContextBuilder
 from app.analysis.contracts import (
     FEATURE_VERSION,
     SCOPE_SYMBOL,
@@ -7,7 +8,6 @@ from app.analysis.contracts import (
     MarketContextResponse,
     MarketSnapshot,
 )
-from app.analysis.context import MarketContextBuilder
 from app.analysis.service import AnalysisService, context_from_snapshot
 
 __all__ = [
