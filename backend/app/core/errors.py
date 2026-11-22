@@ -116,6 +116,28 @@ class StrategyUnavailableError(ApiError):
         super().__init__("STRATEGY_UNAVAILABLE", message, 503, details)
 
 
+class TradePlanningUnavailableError(ApiError):
+    """The deterministic trade-planning service is not available."""
+
+    def __init__(
+        self,
+        message: str = "Deterministic trade planning is not available.",
+        details=None,
+    ) -> None:
+        super().__init__("TRADE_PLANNING_UNAVAILABLE", message, 503, details)
+
+
+class RiskUnavailableError(ApiError):
+    """The deterministic risk service is not available."""
+
+    def __init__(
+        self,
+        message: str = "Deterministic risk validation is not available.",
+        details=None,
+    ) -> None:
+        super().__init__("RISK_UNAVAILABLE", message, 503, details)
+
+
 class ForecastUnavailableError(ApiError):
     def __init__(
         self,

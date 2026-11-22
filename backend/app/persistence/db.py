@@ -233,6 +233,44 @@ SCHEMA_STATEMENTS: tuple[str, ...] = (
     """,
     "CREATE INDEX IF NOT EXISTS idx_strategy_evaluations_scope "
     "ON strategy_evaluations (strategy_id, symbol, timeframe, data_as_of DESC)",
+    # -- Trade planning (Phase 3): immutable hypothetical plans with lifecycle status.
+    """
+    CREATE TABLE IF NOT EXISTS trade_plans (
+        plan_id TEXT PRIMARY KEY,
+        strategy_id TEXT NOT NULL,
+        strategy_version TEXT NOT NULL,
+        strategy_validation_status TEXT NOT NULL,
+        market_snapshot_id TEXT NOT NULL,
+        strategy_evaluation_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        entry_zone_low TEXT NOT NULL,
+        entry_zone_high TEXT NOT NULL,
+        suggested_entry TEXT NOT NULL,
+        actual_fill_price TEXT,
+        stop_loss TEXT NOT NULL,
+        tp1 TEXT NOT NULL,
+        tp2 TEXT NOT NULL,
+        tp3 TEXT NOT NULL,
+        rr_tp1 TEXT NOT NULL,
+        rr_tp2 TEXT NOT NULL,
+        rr_tp3 TEXT NOT NULL,
+        risk_reward_json TEXT NOT NULL,
+        risk_policy_version TEXT NOT NULL,
+        plan_status TEXT NOT NULL,
+        plan_validation_status TEXT NOT NULL,
+        risk_validation_status TEXT NOT NULL,
+        execution_eligibility TEXT NOT NULL,
+        data_as_of TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        payload_json TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_trade_plans_scope "
+    "ON trade_plans (strategy_id, symbol, timeframe, data_as_of DESC)",
 )
 
 

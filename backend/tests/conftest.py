@@ -53,6 +53,8 @@ def make_client(settings: Settings, terminal_exe: Path):
             gateway=gateway or MT5Gateway(module=FakeMT5(), terminal_path=str(terminal_exe)),
             analysis=kwargs.pop("analysis", None),
             strategies=kwargs.pop("strategies", None),
+            risk=kwargs.pop("risk", None),
+            trade_planning=kwargs.pop("trade_planning", None),
             start_polling=False,
             configure_logs=False,
         )

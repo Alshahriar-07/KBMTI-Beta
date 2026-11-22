@@ -633,3 +633,109 @@ class StrategyEvaluationRepository:
         else:
             row = self._db.query_one("SELECT COUNT(*) AS total FROM strategy_evaluations")
         return int(row["total"]) if row else 0
+
+
+class TradePlanRepository:
+    """Persistence for Phase 3 hypothetical plans.
+
+    Prices are stored as text so Decimal precision is preserved; the full typed
+    payload is the audit record. Re-inserting the same deterministic plan id is a no-op.
+    Status refreshes update only lifecycle columns, never the payload geometry.
+    """
+
+    def __init__(self, db: Database) -> None:
+        self._db = db
+
+    def insert(self, *, plan: Any) -> bool:
+        payload = plan.model_dump(mode="json")
+        risk_reward = payload["risk_reward"]
+        rowcount = self._db.execute(
+            "INSERT INTO trade_plans "
+            "(plan_id, strategy_id, strategy_version, strategy_validation_status, market_snapshot_id, "
+            "strategy_evaluation_id, symbol, timeframe, direction, entry_zone_low, entry_zone_high, "
+            "suggested_entry, actual_fill_price, stop_loss, tp1, tp2, tp3, rr_tp1, rr_tp2, rr_tp3, "
+            "risk_reward_json, risk_policy_version, plan_status, plan_validation_status, risk_validation_status, "
+            "execution_eligibility, data_as_of, created_at, expires_at, updated_at, payload_json) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(plan_id) DO NOTHING",
+            (
+                plan.plan_id,
+                plan.strategy_id,
+                plan.strategy_version,
+                plan.strategy_validation_status.value,
+                plan.market_snapshot_id,
+                plan.strategy_evaluation_id,
+                plan.symbol.upper(),
+                plan.timeframe.upper(),
+                plan.direction,
+                str(plan.entry_zone.lower),
+                str(plan.entry_zone.upper),
+                str(plan.suggested_entry),
+                None,
+                str(plan.stop_loss),
+                str(plan.take_profits[0].price),
+                str(plan.take_profits[1].price),
+                str(plan.take_profits[2].price),
+                str(risk_reward["rr_tp1"]),
+                str(risk_reward["rr_tp2"]),
+                str(risk_reward["rr_tp3"]),
+                json.dumps(risk_reward, separators=(",", ":"), sort_keys=True),
+                plan.risk_policy_version,
+                plan.plan_status.value,
+                plan.plan_validation_status.value,
+                plan.risk_validation_status.value,
+                plan.execution_eligibility.value,
+                plan.data_as_of.isoformat(),
+                plan.created_at.isoformat(),
+                plan.expires_at.isoformat(),
+                utc_now_iso(),
+                json.dumps(payload, separators=(",", ":"), sort_keys=True),
+            ),
+        )
+        return rowcount == 1
+
+    def get(self, plan_id: str) -> dict[str, Any] | None:
+        row = self._db.query_one(
+            "SELECT payload_json, plan_status, updated_at FROM trade_plans WHERE plan_id = ?",
+            (plan_id,),
+        )
+        if not row:
+            return None
+        payload = json.loads(row["payload_json"])
+        payload["plan_status"] = row["plan_status"]
+        payload["updated_at"] = row["updated_at"]
+        return payload
+
+    def latest(self, strategy_id: str, symbol: str, timeframe: str) -> dict[str, Any] | None:
+        row = self._db.query_one(
+            "SELECT payload_json, plan_status, updated_at FROM trade_plans "
+            "WHERE strategy_id = ? AND symbol = ? AND timeframe = ? "
+            "ORDER BY data_as_of DESC, created_at DESC LIMIT 1",
+            (strategy_id, symbol.upper(), timeframe.upper()),
+        )
+        if not row:
+            return None
+        payload = json.loads(row["payload_json"])
+        payload["plan_status"] = row["plan_status"]
+        payload["updated_at"] = row["updated_at"]
+        return payload
+
+    def update_status(
+        self, plan_id: str, status: str, execution_eligibility: str | None = None
+    ) -> bool:
+        rowcount = self._db.execute(
+            "UPDATE trade_plans SET plan_status = ?, "
+            "execution_eligibility = COALESCE(?, execution_eligibility), updated_at = ? "
+            "WHERE plan_id = ?",
+            (status, execution_eligibility, utc_now_iso(), plan_id),
+        )
+        return rowcount == 1
+
+    def count(self, strategy_id: str | None = None) -> int:
+        if strategy_id:
+            row = self._db.query_one(
+                "SELECT COUNT(*) AS total FROM trade_plans WHERE strategy_id = ?", (strategy_id,)
+            )
+        else:
+            row = self._db.query_one("SELECT COUNT(*) AS total FROM trade_plans")
+        return int(row["total"]) if row else 0

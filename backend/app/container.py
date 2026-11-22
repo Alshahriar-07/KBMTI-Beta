@@ -33,10 +33,13 @@ from app.persistence.repositories import (
     SignalRepository,
     StrategyEvaluationRepository,
     TickRepository,
+    TradePlanRepository,
 )
+from app.risk.service import RiskService
 from app.signals.service import SignalService
 from app.strategies.service import StrategyService
 from app.system.monitor import SystemMonitor
+from app.trade_planning.service import TradePlanningService
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +68,8 @@ class AppContainer:
     kie: KieService
     analysis: AnalysisService | None
     strategies: StrategyService | None
+    risk: RiskService | None
+    trade_planning: TradePlanningService | None
     system: SystemMonitor
     started_at: float
     log_file: Path | None = None
@@ -83,6 +88,8 @@ def build_container(
     kie: KieService | None = None,
     analysis: AnalysisService | None = None,
     strategies: StrategyService | None = None,
+    risk: RiskService | None = None,
+    trade_planning: TradePlanningService | None = None,
 ) -> AppContainer:
     settings.ensure_dirs()
     db = Database(settings.db_path)
@@ -149,6 +156,23 @@ def build_container(
         except Exception:  # pragma: no cover - construction is intentionally defensive
             logger.exception("Strategy engine failed to initialize; continuing without it")
             strategies = None
+    if risk is None:
+        try:
+            risk = RiskService()
+        except Exception:  # pragma: no cover - construction is intentionally defensive
+            logger.exception("Risk engine failed to initialize; continuing without it")
+            risk = None
+    if trade_planning is None and analysis is not None and strategies is not None and risk is not None:
+        try:
+            trade_planning = TradePlanningService(
+                analysis=analysis,
+                strategies=strategies,
+                risk=risk,
+                repository=TradePlanRepository(db),
+            )
+        except Exception:  # pragma: no cover - construction is intentionally defensive
+            logger.exception("Trade planning failed to initialize; continuing without it")
+            trade_planning = None
     signals = SignalService(market=market, repository=signal_repo, settings=settings)
     forecast = ForecastService(
         provider=PatronForecastProvider(patron=patron, history=binance_history, settings=settings),
@@ -230,6 +254,8 @@ def build_container(
         kie=kie_service,
         analysis=analysis,
         strategies=strategies,
+        risk=risk,
+        trade_planning=trade_planning,
         system=SystemMonitor(),
         started_at=time.time(),
     )
