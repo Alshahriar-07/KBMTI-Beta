@@ -1,7 +1,7 @@
 # KBMTI AI Trading Upgrade — documentation index
 
 **Plan version:** 1.0 (from `NEW_AI_UPDATE/`)
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-22
 **Scope:** AI market intelligence, strategy evaluation, trade planning, risk, journal,
 outcome review and controlled learning — while preserving PATRON, the existing chat and
 the existing API/UI contracts. No automatic order execution exists or will be added here.
@@ -13,7 +13,7 @@ the existing API/UI contracts. No automatic order execution exists or will be ad
 | 0 | Repository audit, architecture map, gap analysis, task plan | **Complete** — approved as the baseline |
 | 1 | Market intelligence foundation: BTCUSDT M15 snapshot, trend, structure, momentum, volatility, regime, liquidity, persistence, two read-only endpoints | **Complete, pending gate review** |
 | 2 | Strategy registry and candidate engine (`trend_pullback` first) | **Implementation complete** — 60-case gate PENDING |
-| 3 | Trade planner, validation and risk engine | Not started |
+| 3 | Trade planner, validation and risk engine | **Complete, acceptance recommended** — strategy gate PENDING |
 | 4 | Qwen trading intelligence: read-only tools, validator, deterministic retrieval | Not started |
 | 5 | AI trading assistant UI and chart overlays | Not started |
 | 6 | Trade journal, lifecycle and monitoring | Not started |
@@ -33,6 +33,7 @@ the existing API/UI contracts. No automatic order execution exists or will be ad
 | [`PHASE_1_RESULTS.md`](PHASE_1_RESULTS.md) | Market intelligence implementation, tests, measurements, limitations |
 | [`PHASE_2_RESULTS.md`](PHASE_2_RESULTS.md) | Strategy engine implementation, rules, tests, provisional evaluation, PENDING gate |
 | [`PHASE_2_EVALUATION.json`](PHASE_2_EVALUATION.json) | Provisional historical metrics and the 60 exported (unreviewed) gate cases |
+| [`PHASE_3_RESULTS.md`](PHASE_3_RESULTS.md) | Trade geometry, risk policy, lifecycle, API, persistence, tests, measurements, acceptance |
 
 ## Approved decisions (locked)
 
@@ -54,7 +55,7 @@ PYTHONPATH=. .venv/Scripts/python.exe -m pytest
 .venv/Scripts/python.exe -m ruff check app tests scripts
 ```
 
-The real-model KIE test remains opt-in (`-m kie_runtime`) and is not part of Phase 1 or 2.
+The real-model KIE test remains opt-in (`-m kie_runtime`) and is not part of Phases 1–3.
 The provisional strategy evaluation is separate and read-only:
 
 ```bash
