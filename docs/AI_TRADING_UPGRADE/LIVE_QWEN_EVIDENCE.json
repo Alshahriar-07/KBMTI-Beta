@@ -1,0 +1,61 @@
+{
+  "captured_at_utc": "2026-11-22T14:15:05.113824+00:00",
+  "fixture": "strategy_cycle_1_long",
+  "runtime": "embedded llama.cpp Vulkan b12503",
+  "model_load_s": 2.43,
+  "end_to_end_qwen_s": 20.39,
+  "qwen": {
+    "used": true,
+    "status": "USED",
+    "model": "Qwen3-4B-Q4_K_M.gguf (Q4_K_M) \u00b7 llama.cpp b12503",
+    "run_id": "c1a64d5abe964777b083431fd5cc3fd8",
+    "latency_ms": 20310.12,
+    "error": null,
+    "validation_notes": [
+      "schema valid",
+      "3 known evidence references",
+      "all numeric claims verified"
+    ]
+  },
+  "deterministic_action": "LONG",
+  "plan_status": "PLAN_REVIEW_REQUIRED",
+  "strategy_validation_status": "PENDING",
+  "market_explanation": "Snapshot momentum is bearish, volatility is normal. Market is trending up with strong bullish trend. Structure is uptrend.",
+  "strategy_comparison": [
+    {
+      "strategy_id": "trend_pullback",
+      "strategy_version": "1.0.0",
+      "decision": "LONG",
+      "quality_score": 80,
+      "quality_label": "HIGH",
+      "validation_status": "PENDING",
+      "eligible": true,
+      "reason": "Deterministic checklist quality, not a probability. The independent 60-case gate is PENDING, so the candidate cannot be treated as validated."
+    }
+  ],
+  "plan_explanation": "Plan requires review. Entry zone is 31880.81-31883.00. Stop at 31847.72. Targets at 31959.00, 31966.67, 31974.34.",
+  "uncertainty": "Strategy validation pending. Plan requires review. Invalidation conditions may apply.",
+  "next_action": "Review plan and strategy. Confirm execution eligibility.",
+  "warnings": [
+    "Targets are projections, not promises; no target is guaranteed to be reached.",
+    "The plan is hypothetical geometry only; no order was placed and no fill exists.",
+    "Strategy 'trend_pullback' 1.0.0 is PENDING; risk validation does not validate the strategy.",
+    "Targets are deterministic projections from structure/ATR/risk multiples; they are not promises.",
+    "Position size is NOT_CALCULATED because verified account inputs are unavailable.",
+    "UNVALIDATED_STRATEGY: trend_pullback 1.0.0 has a PENDING independent gate; execution eligibility is review-gated.",
+    "Qwen does not override deterministic risk. The strategy gate is PENDING and execution is disabled."
+  ],
+  "evidence_refs": [
+    "snapshot:mkt_d2412c3d8e8d26b0303f5313367b",
+    "evaluation:evl_e8aadf10c078285466810466",
+    "trend.state",
+    "structure.events",
+    "volatility.atr14",
+    "plan:plan_b4da3b2bb212cc339054ff01",
+    "risk.checks",
+    "plan.geometry",
+    "knowledge:liquidity-regimes#overview@1.0.0",
+    "knowledge:momentum-volatility#overview@1.0.0",
+    "knowledge:market-structure#overview@1.0.0"
+  ]
+}

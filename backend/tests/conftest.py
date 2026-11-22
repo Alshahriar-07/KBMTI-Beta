@@ -55,6 +55,10 @@ def make_client(settings: Settings, terminal_exe: Path):
             strategies=kwargs.pop("strategies", None),
             risk=kwargs.pop("risk", None),
             trade_planning=kwargs.pop("trade_planning", None),
+            journal=kwargs.pop("journal", None),
+            outcomes=kwargs.pop("outcomes", None),
+            intelligence=kwargs.pop("intelligence", None),
+            learning=kwargs.pop("learning", None),
             start_polling=False,
             configure_logs=False,
         )

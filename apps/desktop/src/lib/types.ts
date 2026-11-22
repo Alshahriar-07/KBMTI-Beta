@@ -735,3 +735,211 @@ export interface StreamHello {
   latest_forecast?: ForecastRun | null;
   server_time: string;
 }
+
+export interface KnowledgeHit {
+  id: string;
+  version: string;
+  title: string;
+  text: string;
+  score: number;
+  refs: string[];
+}
+
+export interface StrategyComparison {
+  strategy_id: string;
+  strategy_version: string;
+  decision: string;
+  quality_score: number;
+  quality_label: string;
+  validation_status: string;
+  eligible: boolean;
+  reason: string;
+}
+
+export interface AssistantQwen {
+  used: boolean;
+  status: string;
+  model: string | null;
+  run_id: string | null;
+  latency_ms: number | null;
+  error: string | null;
+  validation_notes: string[];
+}
+
+export interface TradingIntelligence {
+  request_id: string;
+  generated_at: string;
+  data_as_of: string;
+  is_stale: boolean;
+  snapshot_id: string;
+  strategy_evaluation_id: string;
+  plan_id: string | null;
+  symbol: string;
+  timeframe: string;
+  action: "LONG" | "SHORT" | "WAIT" | "NO_TRADE";
+  plan_status: string;
+  execution_eligibility: string;
+  strategy_validation_status: string;
+  market_explanation: string;
+  strategy_comparison: StrategyComparison[];
+  plan_explanation: string;
+  uncertainty: string;
+  next_action: string;
+  evidence_refs: string[];
+  knowledge_refs: string[];
+  knowledge: KnowledgeHit[];
+  warnings: string[];
+  qwen: AssistantQwen;
+  position_size_status: string;
+  position_size: null;
+  execution: "DISABLED";
+  disclaimer: string;
+}
+
+export interface AssistantStatus {
+  enabled: boolean;
+  deterministic_available: boolean;
+  qwen_enabled: boolean;
+  qwen_ready: boolean;
+  qwen_model: string | null;
+  knowledge_documents: number;
+  knowledge_version: string;
+  strategy_validation_status: string;
+  execution: "DISABLED";
+  generated_at: string;
+  notes: string[];
+}
+
+export interface JournalEvent {
+  event_id: string;
+  trade_id: string;
+  event_type: string;
+  price: string | null;
+  note: string | null;
+  occurred_at: string;
+  created_at: string;
+}
+
+export interface JournalRecord {
+  trade_id: string;
+  plan_id: string;
+  mode: "PAPER" | "MANUAL";
+  status: "OPEN" | "CLOSED" | "EXPIRED" | "CANCELLED";
+  direction: string;
+  symbol: string;
+  timeframe: string;
+  strategy_id: string;
+  strategy_version: string;
+  strategy_validation_status: string;
+  planned_entry: string;
+  actual_entry: string | null;
+  stop_loss: string;
+  tp1: string;
+  tp2: string;
+  tp3: string;
+  exit_price: string | null;
+  fees: string;
+  slippage: string;
+  outcome: string | null;
+  r_multiple: string | null;
+  mfe: string | null;
+  mae: string | null;
+  opened_at: string;
+  closed_at: string | null;
+  notes: string | null;
+  events: JournalEvent[];
+  position_size_status: string;
+  position_size: null;
+  execution: string;
+}
+
+export interface JournalRecordsResponse {
+  records: JournalRecord[];
+  count: number;
+  open: number;
+  closed: number;
+  expired: number;
+  note: string;
+}
+
+export interface OutcomeSummary {
+  records: number;
+  closed_or_expired: number;
+  reviewed: number;
+  approved_for_dataset: number;
+  categories: Record<string, number>;
+  note: string;
+}
+
+export interface LearningStatus {
+  enabled: boolean;
+  datasets: number;
+  backtests: number;
+  approved_outcomes: number;
+  paper_trade_gate: Record<string, unknown>;
+  training_available: boolean;
+  training_reason: string;
+  execution: "DISABLED";
+  generated_at: string;
+}
+
+export interface DatasetVersion {
+  dataset_id: string;
+  name: string;
+  manifest_hash: string;
+  status: string;
+  created_at: string;
+  summary: Record<string, unknown>;
+}
+
+export interface BacktestSummary {
+  backtest_id: string;
+  created_at: string;
+  status: string;
+  metrics: Record<string, unknown>;
+  warnings: string[];
+}
+
+export interface TradeTargetView {
+  label: string;
+  price: string;
+  risk_multiple: string;
+  method: string;
+}
+
+export interface TradePlanView {
+  plan_id: string;
+  plan_status: string;
+  direction: "LONG" | "SHORT";
+  symbol: string;
+  timeframe: string;
+  reference_price: string;
+  suggested_entry: string;
+  stop_loss: string;
+  stop_basis: string;
+  entry_zone: { lower: string; upper: string; anchor_type: string };
+  take_profits: TradeTargetView[];
+  risk_reward: { rr_tp1: string; rr_tp2: string; rr_tp3: string };
+  invalidation_conditions: string[];
+  confirmation_requirements: string[];
+  strategy_validation_status: string;
+  execution_eligibility: string;
+}
+
+export interface PlanningResult {
+  status: string;
+  plan: TradePlanView | null;
+  rejection_reasons: Array<{ code: string; message: string }>;
+}
+
+export interface ModelRecord {
+  model_id: string;
+  name: string;
+  status: string;
+  base_model: string;
+  artifact_path: string | null;
+  metrics: Record<string, unknown>;
+  approved_by: string | null;
+  created_at: string;
+  updated_at: string;
+}

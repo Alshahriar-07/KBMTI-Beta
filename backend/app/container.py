@@ -14,14 +14,19 @@ from app.core.config import Settings
 from app.forecasting.automation import ForecastAutomation
 from app.forecasting.patron_provider import PatronForecastProvider
 from app.forecasting.service import ForecastService
+from app.intelligence.service import IntelligenceService
+from app.intelligence.tools import register_trading_tools
 from app.kie.responder import KieResponder
 from app.kie.service import KieService
+from app.learning.repository import LearningRepository
+from app.learning.service import LearningService
 from app.market_data.binance_history import BinanceHistoryClient
 from app.market_data.broadcaster import Broadcaster
 from app.market_data.manager import MarketDataService
 from app.market_data.mt5_gateway import MT5Gateway
 from app.market_data.providers.binance import BinanceMarketDataProvider
 from app.market_data.service import MT5MarketDataProvider
+from app.outcomes.service import OutcomeService
 from app.patron.service import PatronInferenceService
 from app.persistence.db import Database
 from app.persistence.repositories import (
@@ -39,6 +44,8 @@ from app.risk.service import RiskService
 from app.signals.service import SignalService
 from app.strategies.service import StrategyService
 from app.system.monitor import SystemMonitor
+from app.trade_journal.repository import JournalRepository
+from app.trade_journal.service import JournalService
 from app.trade_planning.service import TradePlanningService
 
 logger = logging.getLogger(__name__)
@@ -70,6 +77,10 @@ class AppContainer:
     strategies: StrategyService | None
     risk: RiskService | None
     trade_planning: TradePlanningService | None
+    journal: JournalService | None
+    outcomes: OutcomeService | None
+    intelligence: IntelligenceService | None
+    learning: LearningService | None
     system: SystemMonitor
     started_at: float
     log_file: Path | None = None
@@ -90,6 +101,10 @@ def build_container(
     strategies: StrategyService | None = None,
     risk: RiskService | None = None,
     trade_planning: TradePlanningService | None = None,
+    journal: JournalService | None = None,
+    outcomes: OutcomeService | None = None,
+    intelligence: IntelligenceService | None = None,
+    learning: LearningService | None = None,
 ) -> AppContainer:
     settings.ensure_dirs()
     db = Database(settings.db_path)
@@ -173,6 +188,38 @@ def build_container(
         except Exception:  # pragma: no cover - construction is intentionally defensive
             logger.exception("Trade planning failed to initialize; continuing without it")
             trade_planning = None
+    journal_repository = JournalRepository(db)
+    if journal is None and trade_planning is not None:
+        try:
+            journal = JournalService(
+                planning=trade_planning,
+                repository=journal_repository,
+                candles=candle_repo,
+            )
+        except Exception:  # pragma: no cover - defensive optional phase
+            logger.exception("Trade journal failed to initialize; continuing without it")
+            journal = None
+    if outcomes is None:
+        try:
+            outcomes = OutcomeService(
+                journal=journal_repository,
+                candles=candle_repo,
+                forecasts=forecast_repo,
+            )
+        except Exception:  # pragma: no cover - defensive optional phase
+            logger.exception("Outcome service failed to initialize; continuing without it")
+            outcomes = None
+    if learning is None:
+        try:
+            learning = LearningService(
+                repository=LearningRepository(db),
+                snapshots=MarketSnapshotRepository(db),
+                candles=candle_repo,
+                journal=journal_repository,
+            )
+        except Exception:  # pragma: no cover - optional phase
+            logger.exception("Learning service failed to initialize; continuing without it")
+            learning = None
     signals = SignalService(market=market, repository=signal_repo, settings=settings)
     forecast = ForecastService(
         provider=PatronForecastProvider(patron=patron, history=binance_history, settings=settings),
@@ -221,6 +268,38 @@ def build_container(
     # When it is disabled or the artifacts are missing it still exists and reports a
     # degraded status, so no caller has to special-case its absence.
     kie_service = kie or KieService(db=db)
+    if intelligence is None and analysis is not None and strategies is not None and trade_planning is not None:
+        try:
+            intelligence = IntelligenceService(
+                analysis=analysis,
+                strategies=strategies,
+                planning=trade_planning,
+                kie=kie_service,
+            )
+        except Exception:  # pragma: no cover - optional narration layer
+            logger.exception("Intelligence layer failed to initialize; continuing without it")
+            intelligence = None
+    if (
+        intelligence is not None
+        and analysis is not None
+        and strategies is not None
+        and trade_planning is not None
+        and kie is None
+    ):
+        # A caller-supplied KieService is owned by the caller; do not mutate its
+        # registry. The container-owned service gets the approved read-only tools.
+        try:
+            register_trading_tools(
+                kie_service.registry,
+                analysis=analysis,
+                strategies=strategies,
+                planning=trade_planning,
+                forecast=forecast,
+                journal=journal,
+                outcomes=outcomes,
+            )
+        except Exception:  # pragma: no cover - tool registration is additive
+            logger.exception("Trading tool registration failed")
     chat = ChatService(
         repository=chat_repo,
         market=market,
@@ -256,6 +335,10 @@ def build_container(
         strategies=strategies,
         risk=risk,
         trade_planning=trade_planning,
+        journal=journal,
+        outcomes=outcomes,
+        intelligence=intelligence,
+        learning=learning,
         system=SystemMonitor(),
         started_at=time.time(),
     )

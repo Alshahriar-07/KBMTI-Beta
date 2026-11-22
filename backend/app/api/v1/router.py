@@ -2,12 +2,15 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     analysis,
+    assistant,
     chat,
     diagnostics,
     forecast,
     health,
     indicators,
+    journal,
     kie,
+    learning,
     market,
     mt5,
     patron,
@@ -28,6 +31,9 @@ api_router.include_router(analysis.router)
 api_router.include_router(strategies.router)
 api_router.include_router(trade_planning.router)
 api_router.include_router(risk.router)
+api_router.include_router(journal.router)
+api_router.include_router(assistant.router)
+api_router.include_router(learning.router)
 api_router.include_router(indicators.router)
 api_router.include_router(signals.router)
 api_router.include_router(patron.router)

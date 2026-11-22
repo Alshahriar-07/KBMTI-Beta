@@ -1,9 +1,12 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { AssistantPage } from "@/pages/AssistantPage";
 import { ChatPage } from "@/pages/ChatPage";
 import { DiagnosticsPage } from "@/pages/DiagnosticsPage";
 import { ForecastHistoryPage } from "@/pages/ForecastHistoryPage";
+import { JournalPage } from "@/pages/JournalPage";
+import { LearningPage } from "@/pages/LearningPage";
 import { MarketChartPage } from "@/pages/MarketChartPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { OverviewPage } from "@/pages/Overview";
@@ -22,7 +25,10 @@ export function App() {
             <Route element={<AppShell />}>
               <Route index element={<OverviewPage />} />
               <Route path="chart" element={<MarketChartPage />} />
+              <Route path="assistant" element={<AssistantPage />} />
               <Route path="signals" element={<SignalsPage />} />
+              <Route path="journal" element={<JournalPage />} />
+              <Route path="learning" element={<LearningPage />} />
               <Route path="chat" element={<ChatPage />} />
               <Route path="history" element={<ForecastHistoryPage />} />
               <Route path="replay" element={<ReplayPage />} />

@@ -1,3 +1,5 @@
+(assets/logo.png)
+
 # KBMTI — Native Desktop Market Intelligence Workstation
 
 KBMTI is a native Windows desktop application for BTC market intelligence. The React interface runs inside **PySide6 + Qt WebEngine**, backed by a local FastAPI service, live public Binance data, and the **PATRON** numerical forecasting model.

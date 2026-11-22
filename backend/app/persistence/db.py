@@ -269,8 +269,141 @@ SCHEMA_STATEMENTS: tuple[str, ...] = (
         payload_json TEXT NOT NULL
     )
     """,
-    "CREATE INDEX IF NOT EXISTS idx_trade_plans_scope "
+    "    CREATE INDEX IF NOT EXISTS idx_trade_plans_scope "
     "ON trade_plans (strategy_id, symbol, timeframe, data_as_of DESC)",
+    # -- Phase 6: append-only setup actions and paper/manual lifecycle.
+    """
+    CREATE TABLE IF NOT EXISTS setup_actions (
+        action_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        action TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        payload_json TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_setup_actions_plan ON setup_actions (plan_id, created_at)",
+    """
+    CREATE TABLE IF NOT EXISTS journal_trades (
+        trade_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        status TEXT NOT NULL,
+        direction TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        strategy_id TEXT NOT NULL,
+        strategy_version TEXT NOT NULL,
+        strategy_validation_status TEXT NOT NULL,
+        qwen_model_version TEXT,
+        planned_entry TEXT NOT NULL,
+        actual_entry TEXT,
+        stop_loss TEXT NOT NULL,
+        tp1 TEXT NOT NULL,
+        tp2 TEXT NOT NULL,
+        tp3 TEXT NOT NULL,
+        exit_price TEXT,
+        fees TEXT NOT NULL DEFAULT '0',
+        slippage TEXT NOT NULL DEFAULT '0',
+        outcome TEXT,
+        r_multiple TEXT,
+        mfe TEXT,
+        mae TEXT,
+        opened_at TEXT NOT NULL,
+        closed_at TEXT,
+        notes TEXT,
+        payload_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_journal_trades_status ON journal_trades (status, opened_at DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS journal_events (
+        event_id TEXT PRIMARY KEY,
+        trade_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        price TEXT,
+        note TEXT,
+        occurred_at TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_journal_events_trade ON journal_events (trade_id, occurred_at)",
+    """
+    CREATE TABLE IF NOT EXISTS outcome_reviews (
+        trade_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        reviewer TEXT NOT NULL,
+        note TEXT,
+        findings_json TEXT NOT NULL,
+        dataset_eligible INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    # -- Phase 8: versioned datasets and reproducible backtest reports.
+    """
+    CREATE TABLE IF NOT EXISTS dataset_versions (
+        dataset_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        manifest_hash TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        summary_json TEXT NOT NULL,
+        payload_json TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS dataset_cases (
+        dataset_id TEXT NOT NULL,
+        case_id TEXT NOT NULL,
+        split TEXT NOT NULL,
+        data_as_of TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        PRIMARY KEY (dataset_id, case_id)
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_dataset_cases_split ON dataset_cases (dataset_id, split, data_as_of)",
+    """
+    CREATE TABLE IF NOT EXISTS backtest_runs (
+        backtest_id TEXT PRIMARY KEY,
+        created_at TEXT NOT NULL,
+        status TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        metrics_json TEXT NOT NULL,
+        trades_json TEXT NOT NULL,
+        warnings_json TEXT NOT NULL
+    )
+    """,
+    # -- Phase 9: candidate model registry and audited promotion.
+    """
+    CREATE TABLE IF NOT EXISTS model_versions (
+        model_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        status TEXT NOT NULL,
+        base_model TEXT NOT NULL,
+        artifact_path TEXT,
+        metrics_json TEXT NOT NULL,
+        approved_by TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS training_jobs (
+        job_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL,
+        dataset_id TEXT,
+        config_json TEXT NOT NULL,
+        requested_by TEXT NOT NULL,
+        approved_by TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
 )
 
 

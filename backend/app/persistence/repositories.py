@@ -87,6 +87,32 @@ class CandleRepository:
         )
         return list(reversed(rows))
 
+    def between(
+        self,
+        symbol: str,
+        timeframe: str,
+        start_epoch: int,
+        end_epoch: int,
+        source: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Closed candles inside a UTC epoch range, oldest first."""
+
+        if source:
+            rows = self._db.query(
+                "SELECT timestamp_utc, open, high, low, close, tick_volume, spread, real_volume, source "
+                "FROM market_candles WHERE symbol = ? AND timeframe = ? AND source = ? "
+                "AND timestamp_utc >= ? AND timestamp_utc <= ? ORDER BY timestamp_utc",
+                (symbol, timeframe, source, int(start_epoch), int(end_epoch)),
+            )
+        else:
+            rows = self._db.query(
+                "SELECT timestamp_utc, open, high, low, close, tick_volume, spread, real_volume, source "
+                "FROM market_candles WHERE symbol = ? AND timeframe = ? "
+                "AND timestamp_utc >= ? AND timestamp_utc <= ? ORDER BY timestamp_utc",
+                (symbol, timeframe, int(start_epoch), int(end_epoch)),
+            )
+        return rows
+
     def count(self, symbol: str, timeframe: str, source: str = "mt5") -> int:
         row = self._db.query_one(
             "SELECT COUNT(*) AS total FROM market_candles WHERE symbol = ? AND timeframe = ? AND source = ?",
@@ -296,6 +322,19 @@ class ForecastRepository:
             "in_band = excluded.in_band, evaluated_at = excluded.evaluated_at",
             payload,
         )
+
+    def latest_before(self, symbol: str, timeframe: str, iso_time: str) -> dict[str, Any] | None:
+        """Latest forecast created at or before a journal entry, for evidence alignment."""
+
+        row = self._db.query_one(
+            "SELECT id, model_id, created_at, status, output_json FROM forecast_runs "
+            "WHERE symbol = ? AND timeframe = ? AND created_at <= ? AND status = 'ok' "
+            "ORDER BY created_at DESC LIMIT 1",
+            (symbol.upper(), timeframe.upper(), iso_time),
+        )
+        if row:
+            row.pop("output_json", None)
+        return row
 
     def evaluations(self, run_id: str) -> list[dict[str, Any]]:
         rows = self._db.query(
@@ -520,6 +559,26 @@ class MarketSnapshotRepository:
             ),
         )
         return rowcount == 1
+
+    def recent(self, limit: int = 500, symbol: str | None = None, timeframe: str | None = None) -> list[dict[str, Any]]:
+        """Return stored snapshot payloads, oldest first."""
+
+        clauses: list[str] = []
+        params: list[Any] = []
+        if symbol:
+            clauses.append("symbol = ?")
+            params.append(symbol.upper())
+        if timeframe:
+            clauses.append("timeframe = ?")
+            params.append(timeframe.upper())
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(max(1, min(int(limit), 5000)))
+        rows = self._db.query(
+            f"SELECT payload_json, data_as_of FROM market_snapshots {where} "
+            "ORDER BY data_as_of DESC LIMIT ?",
+            params,
+        )
+        return [json.loads(row["payload_json"]) for row in reversed(rows)]
 
     def latest(self, symbol: str, timeframe: str) -> dict[str, Any] | None:
         row = self._db.query_one(

@@ -4,6 +4,8 @@ import {
   Activity,
   BrainCircuit,
   CandlestickChart,
+  ClipboardList,
+  FlaskConical,
   History,
   LayoutDashboard,
   MessagesSquare,
@@ -11,6 +13,7 @@ import {
   PanelLeftOpen,
   PlayCircle,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -33,8 +36,10 @@ const GROUPS: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
       { to: "/chart", label: "Market Analysis", icon: CandlestickChart },
+      { to: "/assistant", label: "Trading Assistant", icon: Sparkles },
       { to: "/signals", label: "Signal Research", icon: BrainCircuit },
-      { to: "/chat", label: "AI Assistant", icon: MessagesSquare },
+      { to: "/journal", label: "Journal", icon: ClipboardList },
+      { to: "/chat", label: "Chat", icon: MessagesSquare },
     ],
   },
   {
@@ -42,6 +47,7 @@ const GROUPS: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { to: "/history", label: "Forecasting", icon: History },
       { to: "/replay", label: "Replay", icon: PlayCircle },
+      { to: "/learning", label: "Learning Lab", icon: FlaskConical },
     ],
   },
   {

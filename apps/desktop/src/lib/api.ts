@@ -1,5 +1,7 @@
 import type {
   AppSettings,
+  AssistantStatus,
+  BacktestSummary,
   CandleSeries,
   ChatConversations,
   ChatMessages,
@@ -9,10 +11,16 @@ import type {
   ForecastHistory,
   ForecastLive,
   ForecastRun,
+  DatasetVersion,
   ForecastStatus,
   Health,
   Indicators,
+  JournalRecordsResponse,
+  LearningStatus,
+  ModelRecord,
   Mt5Status,
+  PlanningResult,
+  OutcomeSummary,
   PatronHealth,
   PatronReadiness,
   PatronStatus,
@@ -23,6 +31,7 @@ import type {
   SymbolList,
   SystemStatus,
   TimeframeOption,
+  TradingIntelligence,
 } from "@/lib/types";
 
 // The desktop launcher serves the UI and API behind one Vite origin (dev proxy
@@ -153,6 +162,25 @@ export const api = {
   diagnostics: () => request<Diagnostics>("/api/v1/diagnostics"),
   replayWindow: (start: number, count: number) =>
     request<ReplayWindow>(`/api/v1/replay/window?start=${start}&count=${count}`),
+
+  assistantCurrent: (useQwen = true) =>
+    request<TradingIntelligence>(`/api/v1/assistant/current?use_qwen=${useQwen ? "true" : "false"}`),
+  planningCurrent: () => request<PlanningResult>("/api/v1/planning/current"),
+  assistantStatus: () => request<AssistantStatus>("/api/v1/assistant/status"),
+
+  journalRecords: () => request<JournalRecordsResponse>("/api/v1/journal/records"),
+  journalSummary: () => request<OutcomeSummary>("/api/v1/journal/summary"),
+  journalMonitor: (id: string) =>
+    request<Record<string, unknown>>(`/api/v1/journal/records/${id}/monitor`),
+
+  learningStatus: () => request<LearningStatus>("/api/v1/learning/status"),
+  learningDatasets: () => request<{ datasets: DatasetVersion[]; count: number }>("/api/v1/learning/datasets"),
+  learningBacktests: () =>
+    request<{ backtests: BacktestSummary[]; count: number }>("/api/v1/learning/backtests"),
+  learningModels: () =>
+    request<{ models: ModelRecord[]; active: ModelRecord | null; count: number; note: string }>(
+      "/api/v1/learning/models",
+    ),
 
   chatSuggestions: () => request<ChatSuggestions>("/api/v1/chat/suggestions"),
   chatConversations: () => request<ChatConversations>("/api/v1/chat/conversations"),
