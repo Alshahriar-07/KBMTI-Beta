@@ -18,6 +18,7 @@ from typing import Any
 from app.kie.config import KieConfig, load_config
 from app.kie.contracts import (
     EventType,
+    HealthState,
     KieEvent,
     Mode,
     RunRequest,
@@ -139,38 +140,56 @@ class KieService:
         )
         self._load_thread: threading.Thread | None = None
         self._last_load_error: str | None = None
+        self._load_lock = threading.Lock()
 
     # ------------------------------------------------------------------ lifecycle
     def startup(self) -> None:
-        """Optionally warm the model in the background; never blocks or raises."""
+        """Warm the model in the background when autoload is enabled."""
 
         if not self.config.enabled or not self.config.autoload:
             return
-        if self._load_thread is not None and self._load_thread.is_alive():
+        self.ensure_loading()
+
+    def ensure_loading(self) -> None:
+        """Start exactly one background load if Qwen has not been initialized.
+
+        The assistant calls this when Qwen is requested, so availability no longer
+        depends on a manual ``POST /kie/load``. It returns immediately and never raises;
+        progress and failures are visible through :meth:`status`.
+        """
+
+        if not self.config.enabled:
             return
+        if self.manager.health_state is not HealthState.NOT_INITIALIZED:
+            return
+        with self._load_lock:
+            if self._load_thread is not None and self._load_thread.is_alive():
+                return
 
-        def warm() -> None:
-            try:
-                self.manager.load()
-                logger.info("KIE model loaded in the background")
-            except Exception as exc:  # noqa: BLE001 - autoload must never crash startup
-                self._last_load_error = str(exc)
-                logger.warning("KIE autoload failed: %s", exc)
+            def warm() -> None:
+                try:
+                    self.manager.load()
+                    self._last_load_error = None
+                    logger.info("KIE model loaded and inference-verified in the background")
+                except Exception as exc:  # noqa: BLE001 - loading must never crash startup
+                    self._last_load_error = str(exc)
+                    logger.warning("KIE background load failed: %s", exc)
 
-        self._load_thread = threading.Thread(target=warm, name="kie-autoload", daemon=True)
-        self._load_thread.start()
+            self._load_thread = threading.Thread(target=warm, name="kie-autoload", daemon=True)
+            self._load_thread.start()
 
     def shutdown(self) -> None:
         try:
             self.core.cancel_all()
         except Exception:  # noqa: BLE001 - shutdown is best effort
             logger.debug("KIE cancel_all failed during shutdown", exc_info=True)
+        # Let an in-flight load finish or time out before freeing its context.
+        if self._load_thread is not None and self._load_thread.is_alive():
+            self._load_thread.join(timeout=5.0)
         try:
             self.manager.shutdown()
         except Exception:  # noqa: BLE001
             logger.warning("KIE shutdown failed", exc_info=True)
-        if self._load_thread is not None and self._load_thread.is_alive():
-            self._load_thread.join(timeout=5.0)
 
     # -------------------------------------------------------------------- state
     @property
@@ -179,7 +198,30 @@ class KieService:
 
     @property
     def ready(self) -> bool:
-        return self.manager.loaded
+        return self.manager.ready
+
+    @property
+    def health_state(self) -> str:
+        return str(self.manager.health_state)
+
+    def wait_until_ready(self, timeout: float | None = None) -> bool:
+        """Start the background load if needed and wait for verified readiness.
+
+        Used by Trading Intelligence so the first request after startup can wait for
+        the real inference gate instead of returning an INITIALIZING placeholder. The
+        wait is bounded and never raises; callers still inspect ``health_state`` and
+        ``status`` to explain a failure.
+        """
+
+        if not self.config.enabled:
+            return False
+        budget = self.config.load_timeout_seconds if timeout is None else float(timeout)
+        self.ensure_loading()
+        try:
+            return bool(self.manager.wait_until_ready(budget))
+        except Exception:  # noqa: BLE001 - readiness must never break the caller
+            logger.warning("KIE readiness wait failed", exc_info=True)
+            return False
 
     def artifacts(self) -> dict[str, Any]:
         """What is actually installed, without importing or loading anything."""
@@ -187,7 +229,7 @@ class KieService:
         from app.kie.runtime.manifest import MANIFEST_PATH, ManifestError, load_manifest, resolve_model
 
         result: dict[str, Any] = {
-            "manifest_path": str(MANIFEST_PATH),
+            "manifest_file": MANIFEST_PATH.name,
             "manifest_present": MANIFEST_PATH.is_file(),
             "model_present": False,
             "runtime": {},
@@ -198,7 +240,7 @@ class KieService:
             result["runtime_tag"] = manifest.tag
             for name, variant in manifest.variants.items():
                 result["runtime"][name] = {
-                    "path": str(variant.path),
+                    "archive": variant.archive,
                     "present": (variant.path / "llama.dll").is_file(),
                 }
             try:
@@ -220,23 +262,53 @@ class KieService:
     def status(self) -> dict[str, Any]:
         artifacts = self.artifacts()
         manager = self.manager.status()
+        model_info = artifacts.get("model") or {}
+        last_error = self._redact(manager["last_error"] or self._last_load_error)
+        last_inference_error = self._redact(manager.get("last_inference_error"))
+        health = dict(manager.get("health") or {})
+        health.update(
+            {
+                "model": manager.get("model_name") or model_info.get("file"),
+                "quantization": model_info.get("quant"),
+                "runtime_version": manager.get("runtime_version"),
+                "last_error": last_error,
+                "last_inference_error": last_inference_error,
+            }
+        )
         return {
             "enabled": self.config.enabled,
-            "available": bool(
+            # ``available`` means verified inference-ready, not "the file exists".
+            "available": bool(manager["ready"]),
+            "artifacts_available": bool(
                 self.config.enabled
                 and artifacts.get("model_present")
                 and any(item.get("present") for item in artifacts.get("runtime", {}).values())
             ),
             "state": manager["state"],
+            "health_state": manager["health_state"],
+            "health_message": manager["health_message"],
+            "health": health,
             "ready": manager["ready"],
             "backend": manager["backend"],
             "accelerated": manager["accelerated"],
             "identity": manager["identity"],
             "model": manager["model"],
+            "model_name": manager.get("model_name") or model_info.get("file"),
+            "quantization": model_info.get("quant"),
+            "runtime_version": manager.get("runtime_version"),
+            "gpu_name": manager.get("gpu_name"),
             "context": manager["context"],
+            "context_size": manager.get("context_size"),
             "memory": manager["memory"],
+            "vram_mb": manager.get("vram_mb"),
+            "vram_budget_mb": manager.get("vram_budget_mb"),
+            "offloaded_layers": manager.get("offloaded_layers"),
+            "total_layers": manager.get("total_layers"),
+            "initialization_seconds": manager.get("initialization_seconds"),
+            "smoke_test": manager.get("smoke_test"),
             "fallback_reason": manager["fallback_reason"],
-            "last_error": manager["last_error"] or self._last_load_error,
+            "last_error": last_error,
+            "last_inference_error": last_inference_error,
             "load_seconds": manager["load_seconds"],
             "loading_seconds": manager["loading_seconds"],
             "queue": manager["queue"],
@@ -259,14 +331,23 @@ class KieService:
             "model": artifacts.get("model"),
             "model_present": artifacts.get("model_present"),
             "runtime": artifacts.get("runtime"),
-            "manifest_path": artifacts.get("manifest_path"),
+            "manifest_file": artifacts.get("manifest_file"),
             "error": artifacts.get("error"),
         }
+
+    @staticmethod
+    def _redact(text: str | None) -> str | None:
+        if not text:
+            return None
+        from app.kie.runtime.manifest import MODELS_ROOT
+
+        return str(text).replace(str(MODELS_ROOT), "<models>").replace("\\", "/")
 
     # ---------------------------------------------------------------- load/unload
     def load(self) -> dict[str, Any]:
         self._require_enabled()
         outcome = self.manager.load()
+        self._last_load_error = None
         payload = outcome.as_dict()
         payload["status"] = self.status()
         return payload

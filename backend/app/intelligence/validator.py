@@ -2,8 +2,8 @@
 
 A syntactically valid JSON answer is not enough. The action must equal the deterministic
 decision, every evidence reference must exist, and every decimal or price-like number in
-the prose must match a value supplied by the planner/snapshot. Any violation rejects the
-whole model answer and the caller falls back to the deterministic explanation.
+the prose must match a value supplied by the deterministic services. Any violation rejects
+the whole model answer and the caller falls back to deterministic text.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from collections.abc import Iterable
 from decimal import Decimal, InvalidOperation
 
 from app.intelligence.contracts import QwenOutput
+from app.intelligence.market_contracts import MarketQwenOutput
 
 _NUMBER = re.compile(r"(?<![\w.])[-+]?\d+(?:\.\d+)?(?![\w.])")
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.IGNORECASE)
@@ -49,23 +50,24 @@ def parse_output(text: str) -> QwenOutput:
     return QwenOutput.model_validate(payload)
 
 
-def validate_output(
-    output: QwenOutput,
+def parse_market_output(text: str) -> MarketQwenOutput:
+    payload = json.loads(extract_json(text))
+    if not isinstance(payload, dict):
+        raise ValueError("model output must be a JSON object")
+    return MarketQwenOutput.model_validate(payload)
+
+
+def _claim_errors(
     *,
-    authoritative_action: str,
+    action: str,
+    prose: str,
+    evidence_refs: Iterable[str],
     allowed_refs: Iterable[str],
     allowed_numbers: Iterable[Decimal | int | float | str],
 ) -> list[str]:
-    """Return validation notes or raise ``ValueError`` with every violation."""
-
     errors: list[str] = []
-    notes: list[str] = []
-    if output.action.value != authoritative_action:
-        errors.append(
-            f"action {output.action.value} does not match deterministic action {authoritative_action}"
-        )
     refs = set(allowed_refs)
-    unknown = sorted(set(output.evidence_refs) - refs)
+    unknown = sorted(set(evidence_refs) - refs)
     if unknown:
         errors.append(f"unknown evidence_refs: {unknown}")
 
@@ -75,16 +77,6 @@ def validate_output(
             numbers.add(Decimal(str(value)))
         except (InvalidOperation, ValueError):
             continue
-    prose = " ".join(
-        [
-            output.market_context,
-            output.strategy_rationale,
-            output.plan_rationale,
-            output.uncertainty,
-            output.next_action,
-        ]
-        + list(output.warnings)
-    )
     lowered = prose.lower()
     for phrase in _PROHIBITED:
         if phrase in lowered:
@@ -101,12 +93,99 @@ def validate_output(
             continue
         if value not in numbers:
             errors.append(f"numeric claim {token} is not present in authoritative data")
+    return errors
+
+
+def validate_output(
+    output: QwenOutput,
+    *,
+    authoritative_action: str,
+    allowed_refs: Iterable[str],
+    allowed_numbers: Iterable[Decimal | int | float | str],
+) -> list[str]:
+    """Return validation notes or raise ``ValueError`` with every violation."""
+
+    errors: list[str] = []
+    if output.action.value != authoritative_action:
+        errors.append(
+            f"action {output.action.value} does not match deterministic action {authoritative_action}"
+        )
+    prose = " ".join(
+        [
+            output.market_context,
+            output.strategy_rationale,
+            output.plan_rationale,
+            output.uncertainty,
+            output.next_action,
+        ]
+        + list(output.warnings)
+    )
+    errors.extend(
+        _claim_errors(
+            action=output.action.value,
+            prose=prose,
+            evidence_refs=output.evidence_refs,
+            allowed_refs=allowed_refs,
+            allowed_numbers=allowed_numbers,
+        )
+    )
     if errors:
         raise ValueError("; ".join(errors))
-    notes.append("schema valid")
-    notes.append(f"{len(output.evidence_refs)} known evidence references")
-    notes.append("all numeric claims verified")
-    return notes
+    return [
+        "schema valid",
+        f"{len(output.evidence_refs)} known evidence references",
+        "all numeric claims verified",
+    ]
 
 
-__all__ = ["extract_json", "parse_output", "validate_output"]
+def validate_market_output(
+    output: MarketQwenOutput,
+    *,
+    authoritative_action: str,
+    allowed_refs: Iterable[str],
+    allowed_numbers: Iterable[Decimal | int | float | str],
+) -> list[str]:
+    """Validate the unified-response narration without relaxing any rule."""
+
+    errors: list[str] = []
+    if output.action.value != authoritative_action:
+        errors.append(
+            f"action {output.action.value} does not match deterministic action {authoritative_action}"
+        )
+    prose = " ".join(
+        [
+            output.market_summary,
+            output.forecast_interpretation,
+            output.uncertainty,
+            output.next_action,
+        ]
+        + list(output.bullish_evidence)
+        + list(output.bearish_evidence)
+        + list(output.missing_information)
+        + list(output.warnings)
+    )
+    errors.extend(
+        _claim_errors(
+            action=output.action.value,
+            prose=prose,
+            evidence_refs=output.evidence_refs,
+            allowed_refs=allowed_refs,
+            allowed_numbers=allowed_numbers,
+        )
+    )
+    if errors:
+        raise ValueError("; ".join(errors))
+    return [
+        "schema valid",
+        f"{len(output.evidence_refs)} known evidence references",
+        "all numeric claims verified",
+    ]
+
+
+__all__ = [
+    "extract_json",
+    "parse_output",
+    "parse_market_output",
+    "validate_output",
+    "validate_market_output",
+]

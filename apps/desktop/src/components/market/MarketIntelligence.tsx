@@ -1,6 +1,7 @@
 import { ArrowRight, BrainCircuit } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { AiIntelligencePanel } from "@/components/market/AiIntelligencePanel";
 import { SignalDistribution } from "@/components/market/SignalDistribution";
 import { DataRow } from "@/components/ui/DataRow";
 import { GroupLabel } from "@/components/ui/Panel";
@@ -19,7 +20,14 @@ import {
   formatPrice,
   formatTimeOnly,
 } from "@/lib/format";
-import type { ForecastRun, Indicators, Mt5Status, Signal, Snapshot } from "@/lib/types";
+import type {
+  ForecastRun,
+  Indicators,
+  MarketIntelligence as MarketIntelligenceView,
+  Mt5Status,
+  Signal,
+  Snapshot,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 function ReadingRow({
@@ -57,6 +65,9 @@ interface MarketIntelligenceProps {
   forecast?: ForecastRun | null;
   evaluatedAt?: string | null;
   loading?: boolean;
+  intelligence?: MarketIntelligenceView | null;
+  intelligenceLoading?: boolean;
+  intelligenceError?: string | null;
 }
 
 /** Right-hand structured market rail: quote, feed provenance, technicals, bias. */
@@ -68,6 +79,9 @@ export function MarketIntelligence({
   forecast = null,
   evaluatedAt = null,
   loading = false,
+  intelligence = null,
+  intelligenceLoading = false,
+  intelligenceError = null,
 }: MarketIntelligenceProps) {
   const digits = snapshot?.digits ?? 2;
   const change = snapshot?.daily_change_percent ?? null;
@@ -123,6 +137,12 @@ export function MarketIntelligence({
             <span className="num">{formatTimeOnly(snapshot?.tick_time_iso)}</span>
           </p>
         </div>
+
+        <AiIntelligencePanel
+          intelligence={intelligence}
+          loading={intelligenceLoading}
+          error={intelligenceError}
+        />
 
         <GroupLabel>Top of book</GroupLabel>
         <DataRow label="Bid" value={formatPrice(snapshot?.bid, digits)} />
@@ -224,9 +244,9 @@ export function MarketIntelligence({
           detail="volatility"
         />
 
-        <GroupLabel>Signal distribution</GroupLabel>
+        <GroupLabel>Rule signal distribution</GroupLabel>
         <div className="px-2 py-2">
-          <SignalDistribution signal={signal} forecast={forecast} compact />
+          <SignalDistribution signal={signal} forecast={null} compact />
           <Link
             to="/signals"
             className="mt-2 inline-flex items-center gap-1 px-1 text-[10.5px] font-medium text-ink-muted transition-colors hover:text-ink"

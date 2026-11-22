@@ -1,0 +1,859 @@
+{
+  "generated_at": "2026-11-22T17:33:45.094893+00:00",
+  "as_of": "2026-11-17T08:30:30+00:00",
+  "patron": {
+    "state": "READY",
+    "checkpoint_sha256": "bd809766fdd76fcd325f55f0092cc93b334d2d08ba6fa84c836624b3d89b26ec",
+    "last_latency_ms": 188.15,
+    "as_of": "2026-11-17T08:30:00+00:00",
+    "momentum": {
+      "class_probabilities": {
+        "strong_bullish": 0.21433,
+        "bullish": 0.184219,
+        "sideways": 0.189197,
+        "bearish": 0.203457,
+        "strong_bearish": 0.208797
+      },
+      "predicted_class": "strong_bullish"
+    },
+    "barrier": {
+      "tp_first": 0.362997,
+      "sl_first": 0.355458,
+      "timeout": 0.281545
+    }
+  },
+  "qwen_load": {
+    "backend": "vulkan",
+    "seconds": 2.991,
+    "identity": {
+      "runtime_tag": "b12503",
+      "llama_version": "1.0.0-dev",
+      "devices": [
+        "ggml_vulkan: 0 = AMD Radeon RX 580 2048SP (AMD proprietary driver) | uma: 0 | rebar: 0 | fp16: 0 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 32768 | int dot: 0 | matrix cores: none"
+      ],
+      "gpu_name": null,
+      "gpu_offload": true
+    }
+  },
+  "result": {
+    "request_id": "5f5494216d594b32bdcc0757d19eab07",
+    "generated_at": "2026-11-17T08:30:30Z",
+    "data_as_of": "2026-11-17T08:30:00Z",
+    "is_stale": false,
+    "symbol": "BTCUSDT",
+    "timeframe": "M15",
+    "market_snapshot": {
+      "provider": "binance",
+      "last_price": 64507.18,
+      "atr14": 195.48330521,
+      "atr_percent": 0.303041,
+      "ema9": 64641.57690362,
+      "ema21": 64718.485411,
+      "ema50": 64784.30948082,
+      "rsi14": 41.6836,
+      "macd": -73.23747209,
+      "macd_histogram": -18.42583886,
+      "validation": {
+        "status": "OK",
+        "checks": [
+          "closed_candles_only",
+          "no_duplicate_timestamps",
+          "monotonic_timestamps",
+          "ohlcv_integrity",
+          "minimum_warmup"
+        ],
+        "errors": []
+      },
+      "provenance": {
+        "provider": "binance",
+        "source": "local_parquet",
+        "candle_count": 500,
+        "first_candle_time": "2026-11-12T03:30:00Z",
+        "last_closed_candle_time": "2026-11-17T08:30:00Z",
+        "fetched_at": "2026-11-17T08:30:30Z",
+        "input_hash": "46d1c4c9136d79362298cde930df31eb25b146e2a180e956e43c78af0cbfce10",
+        "timeframe_seconds": 900
+      }
+    },
+    "market_condition": {
+      "trend": "STRONG_BEARISH",
+      "trend_strength": "STRONG",
+      "trend_alignment": "BEARISH_STACK",
+      "structure": "DOWNTREND",
+      "momentum": "BEARISH",
+      "momentum_phase": "ACCELERATING",
+      "volatility": "LOW",
+      "volatility_phase": "STABLE",
+      "regime": "TRENDING_DOWN",
+      "direction": "BEARISH",
+      "summary": "Regime TRENDING_DOWN; trend STRONG_BEARISH (STRONG, BEARISH_STACK); structure DOWNTREND; momentum BEARISH (ACCELERATING); volatility LOW (STABLE)."
+    },
+    "chart_overlay": {
+      "levels": [
+        {
+          "id": "level:support:1",
+          "kind": "SUPPORT",
+          "price": 64422.48666667,
+          "label": "Support 2",
+          "touches": 3,
+          "time": "2026-11-17T02:30:00+00:00",
+          "detail": "Cluster of 3 verified swing touches; last tested 2026-11-17T02:30:00+00:00."
+        },
+        {
+          "id": "level:support:2",
+          "kind": "SUPPORT",
+          "price": 64298.875,
+          "label": "Support 3",
+          "touches": 2,
+          "time": "2026-11-17T06:30:00+00:00",
+          "detail": "Cluster of 2 verified swing touches; last tested 2026-11-17T06:30:00+00:00."
+        },
+        {
+          "id": "level:resistance:3",
+          "kind": "RESISTANCE",
+          "price": 64775.79,
+          "label": "Resistance 4",
+          "touches": 2,
+          "time": "2026-11-17T07:45:00+00:00",
+          "detail": "Cluster of 2 verified swing touches; last tested 2026-11-17T07:45:00+00:00."
+        },
+        {
+          "id": "level:support:5",
+          "kind": "SUPPORT",
+          "price": 64114.0,
+          "label": "Support 6",
+          "touches": 2,
+          "time": "2026-11-16T15:15:00+00:00",
+          "detail": "Cluster of 2 verified swing touches; last tested 2026-11-16T15:15:00+00:00."
+        },
+        {
+          "id": "level:resistance:7",
+          "kind": "RESISTANCE",
+          "price": 64927.545,
+          "label": "Resistance 8",
+          "touches": 2,
+          "time": "2026-11-17T01:45:00+00:00",
+          "detail": "Cluster of 2 verified swing touches; last tested 2026-11-17T01:45:00+00:00."
+        },
+        {
+          "id": "level:resistance:0",
+          "kind": "RESISTANCE",
+          "price": 65191.834,
+          "label": "Resistance 1",
+          "touches": 5,
+          "time": "2026-11-17T03:30:00+00:00",
+          "detail": "Cluster of 5 verified swing touches; last tested 2026-11-17T03:30:00+00:00."
+        },
+        {
+          "id": "liquidity:pool:low:1794793500",
+          "kind": "LIQUIDITY",
+          "price": 64533.82,
+          "label": "Liquidity Above",
+          "touches": 2,
+          "time": "2026-11-17T01:30:00+00:00",
+          "detail": "['swing:low:1794793500', 'swing:low:1794879000']"
+        },
+        {
+          "id": "liquidity:pool:low:1794753000",
+          "kind": "LIQUIDITY",
+          "price": 64445.82666667,
+          "label": "Liquidity Below",
+          "touches": 3,
+          "time": "2026-11-17T00:15:00+00:00",
+          "detail": "['swing:low:1794813300', 'swing:low:1794874500', 'swing:low:1794753000']"
+        },
+        {
+          "id": "liquidity:pool:low:1794764700",
+          "kind": "LIQUIDITY",
+          "price": 64383.525,
+          "label": "Liquidity Below",
+          "touches": 2,
+          "time": "2026-11-17T02:30:00+00:00",
+          "detail": "['swing:low:1794764700', 'swing:low:1794882600']"
+        }
+      ],
+      "structure": [
+        {
+          "id": "structure:0:LH",
+          "kind": "LH",
+          "price": 65150.0,
+          "time": "2026-11-16T17:15:00+00:00",
+          "label": "LH",
+          "detail": "['swing:high:1794849300', 'previous_swing:high:1794839400']",
+          "direction": "BEARISH"
+        },
+        {
+          "id": "structure:1:HL",
+          "kind": "HL",
+          "price": 64716.0,
+          "time": "2026-11-16T18:30:00+00:00",
+          "label": "HL",
+          "detail": "['swing:low:1794853800', 'previous_swing:low:1794842100']",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "structure:2:HH",
+          "kind": "HH",
+          "price": 65190.08,
+          "time": "2026-11-16T18:45:00+00:00",
+          "label": "HH",
+          "detail": "['swing:high:1794854700', 'previous_swing:high:1794849300']",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "structure:6:BOS_UP",
+          "kind": "BOS_UP",
+          "price": 65242.18,
+          "time": "2026-11-16T21:15:00+00:00",
+          "label": "BOS_UP",
+          "detail": "['candle:1794863700', 'level:high:1794860100']",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "structure:10:CHOCH_DOWN",
+          "kind": "CHOCH_DOWN",
+          "price": 64886.23,
+          "time": "2026-11-16T23:30:00+00:00",
+          "label": "CHOCH_DOWN",
+          "detail": "['candle:1794871800', 'level:low:1794861000']",
+          "direction": "BEARISH"
+        },
+        {
+          "id": "structure:12:LL",
+          "kind": "LL",
+          "price": 64454.54,
+          "time": "2026-11-17T00:15:00+00:00",
+          "label": "LL",
+          "detail": "['swing:low:1794874500', 'previous_swing:low:1794861000']",
+          "direction": "BEARISH"
+        },
+        {
+          "id": "structure:17:CHOCH_UP",
+          "kind": "CHOCH_UP",
+          "price": 65010.58,
+          "time": "2026-11-17T03:15:00+00:00",
+          "label": "CHOCH_UP",
+          "detail": "['candle:1794885300', 'level:high:1794879900']",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "sweep:0:HIGH",
+          "kind": "SWEEP_HIGH",
+          "price": 64805.04666667,
+          "time": "2026-11-17T06:00:00+00:00",
+          "label": "Liquidity sweep high",
+          "detail": "CONFIRMED",
+          "direction": "BEARISH"
+        },
+        {
+          "id": "sweep:1:LOW",
+          "kind": "SWEEP_LOW",
+          "price": 64383.525,
+          "time": "2026-11-17T06:30:00+00:00",
+          "label": "Liquidity sweep low",
+          "detail": "CONFIRMED",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "sweep:2:LOW",
+          "kind": "SWEEP_LOW",
+          "price": 64533.82,
+          "time": "2026-11-17T06:45:00+00:00",
+          "label": "Liquidity sweep low",
+          "detail": "CONFIRMED",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "sweep:3:LOW",
+          "kind": "SWEEP_LOW",
+          "price": 64669.275,
+          "time": "2026-11-17T07:45:00+00:00",
+          "label": "Liquidity sweep low",
+          "detail": "UNCONFIRMED",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "sweep:4:LOW",
+          "kind": "SWEEP_LOW",
+          "price": 64708.0,
+          "time": "2026-11-17T07:45:00+00:00",
+          "label": "Liquidity sweep low",
+          "detail": "UNCONFIRMED",
+          "direction": "BULLISH"
+        },
+        {
+          "id": "sweep:5:LOW",
+          "kind": "SWEEP_LOW",
+          "price": 64445.82666667,
+          "time": "2026-11-17T08:15:00+00:00",
+          "label": "Liquidity sweep low",
+          "detail": "UNCONFIRMED",
+          "direction": "BULLISH"
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "bullish_continuation",
+          "title": "Bullish continuation",
+          "bias": "BULLISH",
+          "available": true,
+          "condition": "Price is below resistance 64775.79.",
+          "trigger": 64775.79,
+          "target": 64927.545,
+          "invalidation": 64422.48666667,
+          "confirmation": "A closed 15m candle above 64775.79 with the level holding as support.",
+          "invalidation_text": "A close back below 64422.49 invalidates the bullish continuation.",
+          "evidence_for": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING).",
+            "Deterministic direction is bearish, opposing this bullish path."
+          ],
+          "evidence_against": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING)."
+          ],
+          "unavailable_reason": null,
+          "structure": "DOWNTREND",
+          "data_as_of": "2026-11-17T08:30:00Z",
+          "data_is_stale": false,
+          "path": [
+            {
+              "offset_bars": 1,
+              "price": 64775.79
+            },
+            {
+              "offset_bars": 3,
+              "price": 64927.545
+            }
+          ]
+        },
+        {
+          "id": "bearish_reversal",
+          "title": "Bearish reversal",
+          "bias": "BEARISH",
+          "available": true,
+          "condition": "Resistance 64775.79 is the nearest verified upside level.",
+          "trigger": 64775.79,
+          "target": 64422.48666667,
+          "invalidation": 64775.79,
+          "confirmation": "A closed 15m candle rejects 64775.79 and momentum turns bearish.",
+          "invalidation_text": "A close above 64775.79 invalidates the reversal.",
+          "evidence_for": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING)."
+          ],
+          "evidence_against": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING).",
+            "Deterministic direction is bearish, opposing this bullish path."
+          ],
+          "unavailable_reason": null,
+          "structure": "DOWNTREND",
+          "data_as_of": "2026-11-17T08:30:00Z",
+          "data_is_stale": false,
+          "path": [
+            {
+              "offset_bars": 1,
+              "price": 64775.79
+            },
+            {
+              "offset_bars": 3,
+              "price": 64422.48666667
+            }
+          ]
+        },
+        {
+          "id": "bearish_continuation",
+          "title": "Bearish continuation",
+          "bias": "BEARISH",
+          "available": true,
+          "condition": "Price is above support 64422.49.",
+          "trigger": 64422.48666667,
+          "target": 64298.875,
+          "invalidation": 64775.79,
+          "confirmation": "A closed 15m candle below 64422.49.",
+          "invalidation_text": "A close back above 64775.79 invalidates the bearish continuation.",
+          "evidence_for": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING)."
+          ],
+          "evidence_against": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING).",
+            "Deterministic direction is bearish, opposing this bullish path."
+          ],
+          "unavailable_reason": null,
+          "structure": "DOWNTREND",
+          "data_as_of": "2026-11-17T08:30:00Z",
+          "data_is_stale": false,
+          "path": [
+            {
+              "offset_bars": 1,
+              "price": 64422.48666667
+            },
+            {
+              "offset_bars": 3,
+              "price": 64298.875
+            }
+          ]
+        },
+        {
+          "id": "bullish_reversal",
+          "title": "Bullish reversal",
+          "bias": "BULLISH",
+          "available": true,
+          "condition": "Support 64422.49 is the nearest verified downside level.",
+          "trigger": 64422.48666667,
+          "target": 64775.79,
+          "invalidation": 64422.48666667,
+          "confirmation": "A closed 15m candle rejects 64422.49 and momentum turns bullish.",
+          "invalidation_text": "A close below 64422.49 invalidates the reversal.",
+          "evidence_for": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING).",
+            "Deterministic direction is bearish, opposing this bullish path."
+          ],
+          "evidence_against": [
+            "Trend is STRONG_BEARISH with STRONG strength.",
+            "Structure is DOWNTREND.",
+            "Momentum is BEARISH (ACCELERATING)."
+          ],
+          "unavailable_reason": null,
+          "structure": "DOWNTREND",
+          "data_as_of": "2026-11-17T08:30:00Z",
+          "data_is_stale": false,
+          "path": [
+            {
+              "offset_bars": 1,
+              "price": 64422.48666667
+            },
+            {
+              "offset_bars": 3,
+              "price": 64775.79
+            }
+          ]
+        },
+        {
+          "id": "sideways_consolidation",
+          "title": "Sideways consolidation",
+          "bias": "SIDEWAYS",
+          "available": true,
+          "condition": "Verified range 64422.49 \u2013 64775.79.",
+          "trigger": null,
+          "target": null,
+          "invalidation": null,
+          "confirmation": "Price remains between 64422.49 and 64775.79; wait for a close outside the range.",
+          "invalidation_text": "A closed candle outside 64422.49 \u2013 64775.79 invalidates the range.",
+          "evidence_for": [
+            "Structure is DOWNTREND.",
+            "Volatility is LOW (STABLE)."
+          ],
+          "evidence_against": [
+            "A range edge break can turn consolidation into a directional move."
+          ],
+          "unavailable_reason": null,
+          "structure": "DOWNTREND",
+          "data_as_of": "2026-11-17T08:30:00Z",
+          "data_is_stale": false,
+          "path": []
+        }
+      ],
+      "method_note": "Levels and markers are computed from closed candles. Scenario paths are conditional level-to-level sketches, not price predictions."
+    },
+    "forecast_source": {
+      "provider": "patron",
+      "model_id": "patron-1.0.0",
+      "model_version": "patron-1.0.0",
+      "checkpoint": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\backend\\models\\patron\\best.pt",
+      "checkpoint_sha256": "bd809766fdd76fcd325f55f0092cc93b334d2d08ba6fa84c836624b3d89b26ec",
+      "feature_version": "features-1.0.0",
+      "generated_at": "2026-11-22T17:32:58.402621Z",
+      "forecast_as_of": "2026-11-17T08:30:00Z",
+      "input_last_bar_at": "2026-11-17T08:15:00Z",
+      "horizon_candles": 6,
+      "horizon_minutes": 90,
+      "reference_close": 64507.18,
+      "range_quantiles": [
+        {
+          "step": 1,
+          "minutes_ahead": 15,
+          "high": {
+            "q10": 0.00032,
+            "q50": 0.001702,
+            "q90": 0.004
+          },
+          "low": {
+            "q10": -0.002704,
+            "q50": -0.000279,
+            "q90": 0.00122
+          },
+          "close": {
+            "q10": -0.002664,
+            "q50": -0.000117,
+            "q90": 0.002455
+          }
+        },
+        {
+          "step": 2,
+          "minutes_ahead": 30,
+          "high": {
+            "q10": -0.001703,
+            "q50": 0.000864,
+            "q90": 0.004442
+          },
+          "low": {
+            "q10": -0.005249,
+            "q50": -0.001591,
+            "q90": 0.000952
+          },
+          "close": {
+            "q10": -0.003407,
+            "q50": -3.2e-05,
+            "q90": 0.003382
+          }
+        },
+        {
+          "step": 3,
+          "minutes_ahead": 45,
+          "high": {
+            "q10": -0.002706,
+            "q50": 0.000566,
+            "q90": 0.004884
+          },
+          "low": {
+            "q10": -0.006203,
+            "q50": -0.001789,
+            "q90": 0.001612
+          },
+          "close": {
+            "q10": -0.0051,
+            "q50": -0.001023,
+            "q90": 0.003119
+          }
+        },
+        {
+          "step": 4,
+          "minutes_ahead": 60,
+          "high": {
+            "q10": -0.003455,
+            "q50": 0.000472,
+            "q90": 0.005628
+          },
+          "low": {
+            "q10": -0.005937,
+            "q50": -0.000884,
+            "q90": 0.003121
+          },
+          "close": {
+            "q10": -0.005003,
+            "q50": -0.000386,
+            "q90": 0.004349
+          }
+        },
+        {
+          "step": 5,
+          "minutes_ahead": 75,
+          "high": {
+            "q10": -0.002814,
+            "q50": 0.001577,
+            "q90": 0.007228
+          },
+          "low": {
+            "q10": -0.007501,
+            "q50": -0.001736,
+            "q90": 0.002834
+          },
+          "close": {
+            "q10": -0.004964,
+            "q50": 0.000355,
+            "q90": 0.005665
+          }
+        },
+        {
+          "step": 6,
+          "minutes_ahead": 90,
+          "high": {
+            "q10": -0.003794,
+            "q50": 0.001064,
+            "q90": 0.007226
+          },
+          "low": {
+            "q10": -0.006858,
+            "q50": -0.000608,
+            "q90": 0.004335
+          },
+          "close": {
+            "q10": -0.005349,
+            "q50": 0.000336,
+            "q90": 0.006026
+          }
+        }
+      ],
+      "predicted_candles": [
+        {
+          "sequence": 0,
+          "timestamp_utc": 1794904200,
+          "open": 64507.18,
+          "high": 64616.97122036,
+          "low": 64489.18249678,
+          "close": 64499.63265994
+        },
+        {
+          "sequence": 1,
+          "timestamp_utc": 1794905100,
+          "open": 64499.63265994,
+          "high": 64562.91420352,
+          "low": 64404.54907662,
+          "close": 64505.11577024
+        },
+        {
+          "sequence": 2,
+          "timestamp_utc": 1794906000,
+          "open": 64505.11577024,
+          "high": 64543.69106388,
+          "low": 64391.77665498,
+          "close": 64441.18915486
+        },
+        {
+          "sequence": 3,
+          "timestamp_utc": 1794906900,
+          "open": 64441.18915486,
+          "high": 64537.62738896,
+          "low": 64441.18915486,
+          "close": 64482.28022852
+        },
+        {
+          "sequence": 4,
+          "timestamp_utc": 1794907800,
+          "open": 64482.28022852,
+          "high": 64608.90782286,
+          "low": 64395.19553552,
+          "close": 64530.0800489
+        },
+        {
+          "sequence": 5,
+          "timestamp_utc": 1794908700,
+          "open": 64530.0800489,
+          "high": 64575.81563952,
+          "low": 64467.95963456,
+          "close": 64528.85441248
+        }
+      ],
+      "barrier_probabilities": {
+        "tp_first": 0.362997,
+        "sl_first": 0.355458,
+        "timeout": 0.281545
+      },
+      "momentum": {
+        "class_probabilities": {
+          "strong_bullish": 0.21433,
+          "bullish": 0.184219,
+          "sideways": 0.189197,
+          "bearish": 0.203457,
+          "strong_bearish": 0.208797
+        },
+        "predicted_class": "strong_bullish"
+      },
+      "data_quality": {
+        "valid": true,
+        "closed_candles": 96,
+        "sequence_length": 96,
+        "warnings": []
+      },
+      "source_hash": "42167c2e3755b7f7b93e3defa210b10e9c2a0291b8d0e672a492d96f11156b2b",
+      "freshness_seconds": 30.0
+    },
+    "forecast_assessment": {
+      "status": "CONFLICTING_EVIDENCE",
+      "reasons": [
+        "PATRON momentum is strong_bullish while deterministic direction is BEARISH.",
+        "PATRON's median path is BULLISH but only 0.11 ATR from zero (materiality threshold 0.25 ATR); the sign flip is not treated as a material directional conflict."
+      ],
+      "conflicts": [
+        "PATRON momentum is strong_bullish while deterministic direction is BEARISH."
+      ],
+      "usable_in_decision": false,
+      "confidence_score": null,
+      "freshness_seconds": 30.0,
+      "interval_width_atr": 2.831,
+      "barrier_margin": 0.363,
+      "momentum_margin": 0.2143,
+      "forecast_direction": "BULLISH",
+      "deterministic_direction": "BEARISH",
+      "median_path_atr": 0.111,
+      "direction_conflict_material": false,
+      "horizon_minutes": 90
+    },
+    "ai_market_interpretation": "Regime TRENDING_DOWN; trend STRONG_BEARISH (STRONG, BEARISH_STACK); structure DOWNTREND; momentum BEARISH (ACCELERATING); volatility LOW (STABLE).",
+    "ai_forecast_interpretation": "PATRON momentum is strong_bullish while deterministic direction is BEARISH. Conflict in evidence but no material directional conflict.",
+    "bullish_evidence": [
+      "PATRON median close path leans bullish; assessment CONFLICTING_EVIDENCE."
+    ],
+    "bearish_evidence": [
+      "Deterministic trend/regime is STRONG_BEARISH/TRENDING_DOWN.",
+      "Market structure is making lower highs and lower lows.",
+      "Momentum state is bearish.",
+      "Structure event CHOCH_DOWN at 64834.38."
+    ],
+    "strategy_candidates": [
+      {
+        "strategy_id": "trend_pullback",
+        "strategy_version": "1.0.0",
+        "decision": "NO_TRADE",
+        "quality_score": 0,
+        "quality_label": "LOW",
+        "validation_status": "PENDING",
+        "eligible": false,
+        "reason": "Deterministic checklist quality, not a probability. The independent 60-case gate is PENDING, so the candidate cannot be treated as validated."
+      }
+    ],
+    "readiness": {
+      "market": {
+        "status": "READY",
+        "detail": "Verified BTCUSDT M15 snapshot from closed candles.",
+        "reason_code": "MARKET_READY",
+        "missing_inputs": [],
+        "data_as_of": "2026-11-17T08:30:00Z",
+        "freshness_seconds": 30.0
+      },
+      "patron": {
+        "status": "CONFLICTING",
+        "detail": "patron-1.0.0 median path is BULLISH; assessment CONFLICTING_EVIDENCE and not usable for the decision. PATRON momentum is strong_bullish while deterministic direction is BEARISH.",
+        "reason_code": "CONFLICTING_EVIDENCE",
+        "missing_inputs": [],
+        "assessment": "CONFLICTING_EVIDENCE",
+        "usable_in_decision": false,
+        "conflicts": [
+          "PATRON momentum is strong_bullish while deterministic direction is BEARISH."
+        ],
+        "freshness_seconds": 30.0,
+        "median_path_atr": 0.111
+      },
+      "qwen": {
+        "status": "READY",
+        "detail": "Qwen returned a validated structured interpretation with Qwen3-4B-Q4_K_M.gguf (Q4_K_M) \u00b7 llama.cpp b12503.",
+        "reason_code": "USED",
+        "missing_inputs": [],
+        "health_state": "READY",
+        "waited_seconds": null
+      },
+      "strategy": {
+        "status": "PENDING",
+        "detail": "The independent human-reviewed acceptance gate is PENDING; deterministic candidates are evaluated but not validated.",
+        "reason_code": "STRATEGY_GATE_PENDING",
+        "missing_inputs": [],
+        "reviewed_cases": null,
+        "required_cases": null
+      },
+      "trade_plan": {
+        "status": "UNAVAILABLE",
+        "detail": "No trade plan was constructed: Strategy decision is NO_TRADE; no trade plan is constructed.; A recent change of character opposes the trend direction.",
+        "reason_code": "STRATEGY_NO_TRADE",
+        "missing_inputs": [],
+        "plan_status": "PLAN_BLOCKED"
+      },
+      "risk": {
+        "status": "NOT_EVALUATED",
+        "detail": "Risk checks were not evaluated because no plan was constructed.",
+        "reason_code": "NO_PLAN_TO_ASSESS",
+        "missing_inputs": []
+      },
+      "position_size": {
+        "status": "NOT_CALCULATED",
+        "detail": "Position size is not calculated: verified account/risk inputs are missing. No size is fabricated.",
+        "reason_code": "MISSING_ACCOUNT_INPUTS",
+        "missing_inputs": [
+          "account_balance_or_equity",
+          "contract_size",
+          "tick_value",
+          "verified_leverage",
+          "fee_model"
+        ]
+      },
+      "execution": {
+        "status": "DISABLED",
+        "detail": "Order execution is disabled in this phase; no order can be placed.",
+        "reason_code": "EXECUTION_DISABLED",
+        "missing_inputs": []
+      }
+    },
+    "decision": "NO_TRADE",
+    "decision_reason": "No trade plan was constructed (PLAN_BLOCKED): Strategy decision is NO_TRADE; no trade plan is constructed.; A recent change of character opposes the trend direction.. WAIT and NO_TRADE remain valid outcomes.",
+    "trade_plan": null,
+    "risk_validation": {
+      "status": "NOT_EVALUATED",
+      "execution_eligibility": "NOT_ELIGIBLE",
+      "checks": [],
+      "position_size_status": "NOT_CALCULATED",
+      "position_size": null
+    },
+    "invalidation_conditions": [],
+    "data_freshness": {
+      "market_as_of": "2026-11-17T08:30:00+00:00",
+      "forecast_as_of": "2026-11-17T08:30:00+00:00",
+      "forecast_age_seconds": 30.0,
+      "market_age_seconds": 30.0,
+      "market_is_stale": false,
+      "forecast_is_stale": false,
+      "bar_seconds": 900
+    },
+    "model_versions": {
+      "market_feature": "market-intelligence-1.0.0",
+      "strategy": "1.0.0",
+      "strategy_config": "trend-pullback-config-1.0.0",
+      "plan": null,
+      "risk_policy": null,
+      "patron": "patron-1.0.0",
+      "patron_feature": "features-1.0.0",
+      "qwen": "Qwen3-4B-Q4_K_M.gguf (Q4_K_M) \u00b7 llama.cpp b12503"
+    },
+    "evidence_refs": [
+      "snapshot:mkt_0bac959a1c37ac31f36144df27ef",
+      "evaluation:evl_4e16c9eed796e36c59792ded",
+      "trend.state",
+      "structure.events",
+      "volatility.atr14",
+      "knowledge:liquidity-regimes#overview@1.0.0",
+      "knowledge:momentum-volatility#overview@1.0.0",
+      "knowledge:market-structure#overview@1.0.0",
+      "forecast.assessment",
+      "forecast.source",
+      "forecast:live-unified-smoke"
+    ],
+    "warnings": [
+      "Qwen does not override deterministic risk. The strategy gate is PENDING and execution is disabled.",
+      "PATRON is probabilistic source evidence; deterministic analysis and risk remain authoritative.",
+      "PATRON assessment CONFLICTING_EVIDENCE: PATRON momentum is strong_bullish while deterministic direction is BEARISH.",
+      "PATRON assessment CONFLICTING_EVIDENCE: PATRON's median path is BULLISH but only 0.11 ATR from zero (materiality threshold 0.25 ATR); the sign flip is not treated as a material directional conflict."
+    ],
+    "unavailable_fields": [
+      "position_size",
+      "patron_forecast_usable_for_decision",
+      "trade_plan"
+    ],
+    "ai_status": {
+      "used": true,
+      "status": "USED",
+      "model": "Qwen3-4B-Q4_K_M.gguf (Q4_K_M) \u00b7 llama.cpp b12503",
+      "run_id": "d56ea77fdf134c29aeacab2666a2e4b7",
+      "latency_ms": 43187.91,
+      "error": null,
+      "validation_notes": [
+        "schema valid",
+        "11 known evidence references",
+        "all numeric claims verified"
+      ]
+    },
+    "execution": "DISABLED",
+    "position_size_status": "NOT_CALCULATED",
+    "position_size": null,
+    "disclaimer": "Deterministic analysis is authoritative. The strategy gate is PENDING, PATRON is probabilistic source evidence, Qwen cannot alter numbers or risk, and no order or position size exists."
+  }
+}

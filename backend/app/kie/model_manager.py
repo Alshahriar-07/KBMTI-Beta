@@ -24,8 +24,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.kie.config import KieConfig
-from app.kie.contracts import EnginePort, MemoryBudget, ModelState
+from app.kie.contracts import EnginePort, HealthState, MemoryBudget, ModelState
 from app.kie.errors import (
+    GpuBackendUnavailableError,
+    InferenceFailedError,
     KieBusyError,
     KieMemoryBudgetError,
     ModelLoadFailedError,
@@ -42,6 +44,11 @@ _BUFFER_RE = re.compile(
 )
 _OFFLOAD_RE = re.compile(r"offloaded (?P<done>\d+)/(?P<total>\d+) layers to GPU")
 _DEFAULT_TOTAL_LAYERS = 37  # Qwen3-4B: 36 transformer layers + output layer
+_SMOKE_PROMPT = "Reply with exactly: KBMTI online."
+
+
+class _InferenceSmokeError(RuntimeError):
+    """The loaded context could not complete the readiness generation."""
 
 
 @dataclass(frozen=True)
@@ -101,6 +108,19 @@ def parse_offloaded_layers(lines: list[str]) -> tuple[int, int]:
     return 0, _DEFAULT_TOTAL_LAYERS
 
 
+def gpu_name_from_devices(devices: list[str]) -> str | None:
+    """Extract the adapter name from the ggml Vulkan identity line."""
+
+    for line in devices:
+        text = str(line or "")
+        if " = " in text:
+            text = text.split(" = ", 1)[1]
+        name = text.split(" (", 1)[0].split(" | ", 1)[0].strip()
+        if name:
+            return name
+    return None
+
+
 @dataclass
 class LoadOutcome:
     backend: str
@@ -113,16 +133,20 @@ class LoadOutcome:
     fallback_reason: str | None = None
     warnings: list[str] = field(default_factory=list)
     attempts: list[dict[str, Any]] = field(default_factory=list)
+    smoke_test: dict[str, Any] = field(default_factory=dict)
+    initialization_seconds: float = 0.0
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "loaded": True,
             "backend": self.backend,
             "load_seconds": round(self.load_seconds, 3),
+            "initialization_seconds": round(self.initialization_seconds, 3),
             "model": self.model,
             "context": self.context,
             "memory": self.memory.as_dict() if self.memory else None,
             "fallback_reason": self.fallback_reason,
+            "smoke_test": self.smoke_test,
             "warnings": self.warnings,
             "attempts": self.attempts,
         }
@@ -210,6 +234,16 @@ class ModelManager:
         self._last_error: str | None = None
         self._fallback_reason: str | None = None
         self._loading_since: float | None = None
+        self._health_state = HealthState.NOT_INITIALIZED
+        self._health_message = (
+            "Qwen is disabled by configuration."
+            if not config.enabled
+            else "Qwen has not been initialized."
+        )
+        self._last_inference_error: str | None = None
+        self._initialization_seconds: float | None = None
+        self._smoke_test: dict[str, Any] = {}
+        self._last_identity: dict[str, Any] = {}
 
     # ---------------------------------------------------------------- lifecycle
     @property
@@ -221,6 +255,53 @@ class ModelManager:
     def loaded(self) -> bool:
         with self._lock:
             return self._state is ModelState.READY and self._engine is not None
+
+    @property
+    def health_state(self) -> HealthState:
+        with self._lock:
+            return self._health_state
+
+    @property
+    def ready(self) -> bool:
+        """True only after load, GPU offload confirmation and the smoke generation."""
+
+        with self._lock:
+            return (
+                self._state is ModelState.READY
+                and self._health_state is HealthState.READY
+                and self._engine is not None
+            )
+
+    def wait_until_ready(self, timeout: float) -> bool:
+        """Block until the background load (including its smoke test) is READY.
+
+        Trading Intelligence calls this instead of reporting INITIALIZING while the
+        worker is still warming the model. Returns ``False`` on timeout or a terminal
+        load/inference failure; it never raises, so deterministic output stays intact.
+        """
+
+        deadline = time.monotonic() + max(0.0, float(timeout))
+        with self._load_condition:
+            while True:
+                if self.ready:
+                    return True
+                if self._state in {
+                    ModelState.ERROR,
+                    ModelState.DISABLED,
+                    ModelState.UNLOADING,
+                } or self._health_state in {
+                    HealthState.STOPPING,
+                    HealthState.GPU_BACKEND_UNAVAILABLE,
+                    HealthState.GPU_MEMORY_INSUFFICIENT,
+                    HealthState.MODEL_NOT_FOUND,
+                    HealthState.MODEL_LOAD_FAILED,
+                    HealthState.INFERENCE_FAILED,
+                }:
+                    return False
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return False
+                self._load_condition.wait(timeout=min(remaining, 0.25))
 
     @property
     def backend(self) -> str | None:
@@ -253,15 +334,23 @@ class ModelManager:
         )
 
     def load(self) -> LoadOutcome:
-        """Load the model, trying each configured backend and enforcing the budget."""
+        """Load the model, verify GPU offload and prove inference before READY."""
 
+        initialization_started = time.perf_counter()
         with self._lock:
             if not self.config.enabled:
                 from app.kie.errors import KieDisabledError
 
                 raise KieDisabledError()
             if self._state is ModelState.READY and self._outcome is not None:
-                return self._outcome
+                if self._health_state is HealthState.READY:
+                    return self._outcome
+                # Recover an inference-failed session with a fresh smoke generation.
+                engine = self._engine
+                outcome = self._outcome
+            else:
+                engine = None
+                outcome = None
             if self._state is ModelState.LOADING:
                 deadline = time.monotonic() + self.config.load_timeout_seconds
                 while self._state is ModelState.LOADING:
@@ -272,60 +361,152 @@ class ModelManager:
                 if self._state is ModelState.READY and self._outcome is not None:
                     return self._outcome
                 raise ModelLoadingError("A concurrent model load failed; see /api/v1/kie/status.")
-            self._state = ModelState.LOADING
-            self._loading_since = time.monotonic()
-            self._last_error = None
-            self._fallback_reason = None
+            if engine is None:
+                self._state = ModelState.LOADING
+                self._health_state = HealthState.INITIALIZING
+                self._health_message = "Initializing Qwen on the Vulkan backend."
+                self._loading_since = time.monotonic()
+                self._last_error = None
+                self._last_inference_error = None
+                self._fallback_reason = None
 
-        outcome: LoadOutcome | None = None
+        if engine is not None:
+            # The model stayed resident after an inference failure. Prove it works again;
+            # no reload and no second model copy are needed.
+            try:
+                smoke = self._run_smoke_test(engine)
+            except Exception as exc:  # noqa: BLE001 - health is the product surface
+                with self._lock:
+                    self._state = ModelState.READY
+                    self._health_state = HealthState.INFERENCE_FAILED
+                    self._health_message = f"Qwen inference failed: {exc}"
+                    self._last_error = str(exc)
+                    self._last_inference_error = str(exc)
+                raise InferenceFailedError(
+                    "The model is loaded but the inference smoke test failed.",
+                    {"error": str(exc)},
+                ) from exc
+            with self._lock:
+                outcome.smoke_test = smoke
+                outcome.initialization_seconds = time.perf_counter() - initialization_started
+                self._initialization_seconds = outcome.initialization_seconds
+                self._smoke_test = smoke
+                self._health_state = HealthState.READY
+                self._health_message = "Qwen inference is verified on the GPU."
+                self._last_error = None
+                self._last_inference_error = None
+                self._load_condition.notify_all()
+            return outcome
+
         error: Exception | None = None
         attempts: list[dict[str, Any]] = []
-        try:
-            for backend in self._candidates():
-                try:
-                    outcome = self._load_backend(backend, attempts)
-                    break
-                except Exception as exc:  # noqa: BLE001 - every backend failure is a fallback reason
-                    logger.warning("KIE %s backend failed: %s", backend, exc)
-                    attempts.append({"backend": backend, "error": str(exc)})
-                    error = exc
-        finally:
-            with self._lock:
-                if outcome is not None:
-                    self._state = ModelState.READY
-                    self._outcome = outcome
-                    self._last_error = None
-                else:
-                    self._state = ModelState.ERROR
-                    self._last_error = str(error) if error else "no backend could load the model"
-                self._loading_since = None
-                self._load_condition.notify_all()
+        for backend in self._candidates():
+            try:
+                outcome = self._load_backend(backend, attempts)
+                break
+            except Exception as exc:  # noqa: BLE001 - every backend failure is a diagnostic
+                logger.warning("KIE %s backend failed: %s", backend, exc)
+                attempts.append({"backend": backend, "error": str(exc)})
+                error = exc
+
+        with self._lock:
+            self._loading_since = None
+            if outcome is not None:
+                outcome.attempts = attempts
+                outcome.initialization_seconds = time.perf_counter() - initialization_started
+                self._state = ModelState.READY
+                self._outcome = outcome
+                self._initialization_seconds = outcome.initialization_seconds
+                self._smoke_test = outcome.smoke_test
+                self._last_error = None
+                self._last_inference_error = None
+                self._health_state = HealthState.READY
+                self._health_message = (
+                    "Qwen inference is verified with "
+                    f"{outcome.memory.offloaded_layers if outcome.memory else 0}/"
+                    f"{outcome.memory.total_layers if outcome.memory else 0} layers on "
+                    f"{backend}."
+                )
+            else:
+                health, message = self._classify_failure(error)
+                self._state = ModelState.ERROR
+                self._health_state = health
+                self._health_message = message
+                self._last_error = str(error) if error else message
+            self._load_condition.notify_all()
 
         if outcome is None:
             raise ModelLoadFailedError(
-                "KIE could not load the model on any configured backend.",
-                {"attempts": attempts, "backends": self._candidates()},
+                "KIE could not initialize Qwen on the configured backend.",
+                {
+                    "attempts": attempts,
+                    "backends": self._candidates(),
+                    "health_state": str(self._health_state),
+                },
             )
-        outcome.attempts = attempts
         return outcome
+
+    @staticmethod
+    def _classify_failure(error: Exception | None) -> tuple[HealthState, str]:
+        if error is None:
+            return HealthState.GPU_BACKEND_UNAVAILABLE, "No GPU backend was configured."
+        text = str(error)
+        lowered = text.lower()
+        if isinstance(error, KieMemoryBudgetError) or "memory budget" in lowered or "vram" in lowered:
+            return HealthState.GPU_MEMORY_INSUFFICIENT, f"Qwen does not fit the GPU memory budget: {text}"
+        if isinstance(error, GpuBackendUnavailableError) or any(
+            marker in lowered
+            for marker in ("no vulkan", "vulkan device", "gpu device", "llama.dll not found", "could not load llama.cpp")
+        ):
+            return HealthState.GPU_BACKEND_UNAVAILABLE, f"Vulkan is unavailable: {text}"
+        if isinstance(error, (InferenceFailedError, _InferenceSmokeError)) or "smoke" in lowered:
+            return HealthState.INFERENCE_FAILED, f"Qwen inference failed: {text}"
+        if "model not found" in lowered or "manifest not found" in lowered:
+            return HealthState.MODEL_NOT_FOUND, text
+        if "backend 'vulkan' is not in the manifest" in lowered:
+            return HealthState.GPU_BACKEND_UNAVAILABLE, text
+        return HealthState.MODEL_LOAD_FAILED, f"Qwen failed to load: {text}"
 
     def _load_backend(self, backend: str, attempts: list[dict[str, Any]]) -> LoadOutcome:
         gpu_layers = 0 if backend == "cpu" else self.config.n_gpu_layers
         engine = self._engine_factory(backend, self.config, gpu_layers)
         started = time.perf_counter()
-        report = engine.load()
+        try:
+            report = engine.load()
+        except Exception:
+            try:
+                engine.unload()
+            except Exception:  # noqa: BLE001 - preserve the original load error
+                logger.debug("KIE cleanup after failed load failed", exc_info=True)
+            raise
         load_seconds = time.perf_counter() - started
 
         lines = list(getattr(report, "backend_log", []) or [])
         buffers = parse_buffers(lines)
         offloaded, total_layers = parse_offloaded_layers(lines)
         identity = dict(engine.backend_identity() or {})
+        if not identity.get("vulkan_devices") and self._last_identity.get("vulkan_devices"):
+            # Vulkan discovery is process-global: a reload may not emit the adapter
+            # name again. Keep the verified identity instead of reporting an empty GPU.
+            identity["vulkan_devices"] = self._last_identity["vulkan_devices"]
+            identity["gpu_name"] = self._last_identity.get("gpu_name")
         backend_report = dict(getattr(report, "backend", {}) or {})
         if backend != "cpu" and not backend_report.get("gpu_device_present", False):
             engine.unload()
-            raise ModelLoadFailedError(
-                f"The {backend} runtime loaded without a GPU device; refusing to call this GPU inference.",
-                {"backend": backend},
+            raise GpuBackendUnavailableError(
+                f"The {backend} runtime loaded without a GPU device; refusing CPU inference.",
+                {
+                    "backend": backend,
+                    "backend_status": backend_report.get("status"),
+                    "device_count": backend_report.get("device_count"),
+                },
+            )
+        if backend != "cpu" and offloaded <= 0:
+            engine.unload()
+            raise GpuBackendUnavailableError(
+                "Vulkan initialized but no model layers were offloaded to the GPU; "
+                "refusing to report GPU acceleration or run on CPU.",
+                {"backend": backend, "offloaded_layers": offloaded, "total_layers": total_layers},
             )
 
         budget_mb = self.config.vram_budget_mb if backend != "cpu" else self.config.ram_budget_mb
@@ -356,12 +537,22 @@ class ModelManager:
                 )
             engine = self._engine_factory(backend, self.config, allowed)
             started = time.perf_counter()
-            report = engine.load()
+            try:
+                report = engine.load()
+            except Exception:
+                try:
+                    engine.unload()
+                except Exception:  # noqa: BLE001 - preserve the original load error
+                    logger.debug("KIE cleanup after retry load failed", exc_info=True)
+                raise
             load_seconds = time.perf_counter() - started
             lines = list(getattr(report, "backend_log", []) or [])
             buffers = parse_buffers(lines)
             offloaded, total_layers = parse_offloaded_layers(lines)
             identity = dict(engine.backend_identity() or {})
+            if not identity.get("vulkan_devices") and self._last_identity.get("vulkan_devices"):
+                identity["vulkan_devices"] = self._last_identity["vulkan_devices"]
+                identity["gpu_name"] = self._last_identity.get("gpu_name")
             backend_report = dict(getattr(report, "backend", {}) or {})
             measured_mb = buffers.vram_total_mb
             if measured_mb > budget_mb:
@@ -374,6 +565,13 @@ class ModelManager:
                         "offloaded_layers": offloaded,
                     },
                 )
+
+        if backend != "cpu" and offloaded <= 0:
+            engine.unload()
+            raise GpuBackendUnavailableError(
+                "The reduced GPU load offloaded zero layers; refusing CPU inference.",
+                {"backend": backend, "offloaded_layers": offloaded},
+            )
 
         if backend == "cpu" and measured_mb > budget_mb:
             engine.unload()
@@ -394,6 +592,14 @@ class ModelManager:
             residual_mb=self.config.vulkan_residual_mb if backend != "cpu" else 0.0,
         )
 
+        # A model that loads is not necessarily a model that can answer. The readiness
+        # gate is a real generation on the already-initialized context.
+        try:
+            smoke = self._run_smoke_test(engine)
+        except Exception as exc:  # noqa: BLE001 - every smoke failure is a health state
+            engine.unload()
+            raise _InferenceSmokeError(f"inference smoke test failed: {exc}") from exc
+
         first_failure = next((entry for entry in attempts if entry.get("error")), None)
         fallback_reason = (
             f"{first_failure['backend']} unavailable: {first_failure['error']}" if first_failure else None
@@ -402,6 +608,7 @@ class ModelManager:
             self._engine = engine
             self._backend = backend
             self._fallback_reason = fallback_reason
+            self._last_identity = dict(identity)
 
         return LoadOutcome(
             backend=backend,
@@ -413,7 +620,29 @@ class ModelManager:
             memory=memory,
             fallback_reason=self._fallback_reason,
             warnings=list(getattr(report, "warnings", []) or []),
+            smoke_test=smoke,
         )
+
+    @staticmethod
+    def _run_smoke_test(engine: EnginePort) -> dict[str, Any]:
+        started = time.perf_counter()
+        result = engine.generate(
+            messages=[{"role": "user", "content": _SMOKE_PROMPT}],
+            max_tokens=4,
+            temperature=0.0,
+            top_p=1.0,
+            thinking=False,
+        )
+        generated = int(getattr(result, "generated_tokens", 0) or 0)
+        if generated <= 0:
+            raise _InferenceSmokeError("the model produced no tokens")
+        return {
+            "ok": True,
+            "prompt_tokens": int(getattr(result, "prompt_tokens", 0) or 0),
+            "generated_tokens": generated,
+            "seconds": round(time.perf_counter() - started, 3),
+            "text": str(getattr(result, "text", "") or "")[:80],
+        }
 
     def unload(self) -> None:
         with self._lock:
@@ -424,8 +653,13 @@ class ModelManager:
                 self._outcome = None
                 if self.config.enabled:
                     self._state = ModelState.UNLOADED
+                self._health_state = HealthState.NOT_INITIALIZED
+                self._health_message = "Qwen has not been initialized."
+                self._load_condition.notify_all()
                 return
             self._state = ModelState.UNLOADING
+            self._health_state = HealthState.STOPPING
+            self._health_message = "Releasing the Qwen model and GPU memory."
         try:
             engine.unload()
         except Exception as exc:  # noqa: BLE001 - report but never leave the manager stuck
@@ -437,11 +671,18 @@ class ModelManager:
                 self._engine = None
                 self._outcome = None
                 self._backend = None
+                self._smoke_test = {}
                 self._state = ModelState.UNLOADED if self.config.enabled else ModelState.DISABLED
+                self._health_state = HealthState.NOT_INITIALIZED
+                self._health_message = "Qwen has not been initialized."
+                self._load_condition.notify_all()
 
     def shutdown(self) -> None:
         with self._lock:
             engine = self._engine
+            if engine is not None:
+                self._health_state = HealthState.STOPPING
+                self._health_message = "Stopping Qwen and releasing GPU memory."
         if engine is not None:
             try:
                 engine.shutdown()
@@ -451,7 +692,15 @@ class ModelManager:
             self._engine = None
             self._outcome = None
             self._backend = None
+            self._smoke_test = {}
             self._state = ModelState.DISABLED if not self.config.enabled else ModelState.UNLOADED
+            self._health_state = HealthState.NOT_INITIALIZED
+            self._health_message = (
+                "Qwen is disabled by configuration."
+                if not self.config.enabled
+                else "Qwen is stopped."
+            )
+            self._load_condition.notify_all()
 
     # ---------------------------------------------------------------- inference
     @property
@@ -468,14 +717,27 @@ class ModelManager:
         with self._lock:
             engine = self._engine
             state = self._state
-        if engine is None or state is not ModelState.READY:
-            raise ModelNotLoadedError()
+            health = self._health_state
+        if engine is None or state is not ModelState.READY or health is not HealthState.READY:
+            raise ModelNotLoadedError("Qwen is not ready; check /api/v1/kie/status.")
         self._slot.acquire()
         try:
             with self._lock:
-                if self._engine is not engine or self._state is not ModelState.READY:
+                if (
+                    self._engine is not engine
+                    or self._state is not ModelState.READY
+                    or self._health_state is not HealthState.READY
+                ):
                     raise ModelNotLoadedError("The model was unloaded while this request was queued.")
-            return engine.generate(**kwargs)
+            try:
+                return engine.generate(**kwargs)
+            except Exception as exc:
+                with self._lock:
+                    self._last_inference_error = str(exc)
+                    self._last_error = str(exc)
+                    self._health_state = HealthState.INFERENCE_FAILED
+                    self._health_message = f"Qwen inference failed: {exc}"
+                raise
         finally:
             self._slot.release()
 
@@ -498,26 +760,70 @@ class ModelManager:
             last_error = self._last_error
             fallback = self._fallback_reason
             loading_since = self._loading_since
+            health_state = self._health_state
+            health_message = self._health_message
+            last_inference_error = self._last_inference_error
+            initialization_seconds = self._initialization_seconds
+            smoke_test = dict(self._smoke_test)
         identity: dict[str, Any] = {}
         if outcome is not None:
             identity = {
                 "runtime_tag": outcome.identity.get("runtime_tag"),
                 "llama_version": outcome.identity.get("llama_version"),
                 "devices": outcome.identity.get("vulkan_devices") or [],
+                "gpu_name": outcome.identity.get("gpu_name"),
                 "gpu_offload": bool((outcome.identity.get("backend_load") or {}).get("gpu_offload")),
             }
+        devices = list(identity.get("devices") or [])
+        memory = outcome.memory.as_dict() if outcome and outcome.memory else None
+        ready = state is ModelState.READY and health_state is HealthState.READY and outcome is not None
+        accelerated = bool(ready and backend and backend != "cpu" and identity.get("gpu_offload"))
+        gpu_name = identity.get("gpu_name") or gpu_name_from_devices(devices)
+        health = {
+            "state": str(health_state),
+            "ready": ready,
+            "message": health_message,
+            "backend": backend,
+            "gpu_name": gpu_name,
+            "gpu_offloaded": bool(identity.get("gpu_offload")),
+            "offloaded_layers": memory.get("offloaded_layers") if memory else None,
+            "total_layers": memory.get("total_layers") if memory else None,
+            "context_size": (outcome.context or {}).get("n_ctx") if outcome else None,
+            "initialization_seconds": round(initialization_seconds, 3)
+            if initialization_seconds is not None
+            else None,
+            "last_error": last_error,
+            "last_inference_error": last_inference_error,
+            "smoke_test": smoke_test,
+        }
         return {
             "enabled": self.config.enabled,
             "state": str(state),
-            "ready": state is ModelState.READY,
+            "health_state": str(health_state),
+            "health_message": health_message,
+            "health": health,
+            "ready": ready,
             "backend": backend,
-            "accelerated": bool(backend and backend != "cpu"),
+            "accelerated": accelerated,
             "identity": identity,
             "model": (outcome.model if outcome else None),
+            "model_name": (outcome.model or {}).get("description") if outcome else None,
+            "gpu_name": gpu_name,
+            "runtime_version": identity.get("runtime_tag") or identity.get("llama_version"),
             "context": (outcome.context if outcome else None),
-            "memory": outcome.memory.as_dict() if outcome and outcome.memory else None,
+            "context_size": (outcome.context or {}).get("n_ctx") if outcome else None,
+            "memory": memory,
+            "vram_mb": memory.get("measured_mb") if memory else None,
+            "vram_budget_mb": memory.get("budget_mb") if memory else self.config.vram_budget_mb,
+            "offloaded_layers": memory.get("offloaded_layers") if memory else None,
+            "total_layers": memory.get("total_layers") if memory else None,
+            "initialization_seconds": round(initialization_seconds, 3)
+            if initialization_seconds is not None
+            else None,
+            "smoke_test": smoke_test,
             "fallback_reason": fallback,
             "last_error": last_error,
+            "last_inference_error": last_inference_error,
             "load_seconds": round(outcome.load_seconds, 3) if outcome else None,
             "loading_seconds": round(time.monotonic() - loading_since, 1) if loading_since else None,
             "queue": self.queue,

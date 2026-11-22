@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+import threading
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -26,15 +28,56 @@ from app.intelligence.contracts import (
     TradingIntelligence,
 )
 from app.intelligence.knowledge import CORPUS_VERSION, KnowledgeBase
-from app.intelligence.validator import parse_output, validate_output
+from app.intelligence.market import (
+    assess_forecast,
+    build_readiness,
+    evidence_bullets,
+    market_condition,
+    qwen_readiness,
+    risk_view,
+    unified_plan,
+)
+from app.intelligence.market_contracts import (
+    ForecastAssessmentStatus,
+    MarketIntelligence,
+)
+from app.intelligence.validator import (
+    parse_market_output,
+    parse_output,
+    validate_market_output,
+    validate_output,
+)
+from app.intelligence.visualization import build_chart_overlay
 from app.kie.contracts import Mode, RunRequest
 from app.risk.contracts import StrategyValidationStatus
 
 logger = logging.getLogger(__name__)
 
+# Trading Intelligence waits this long for an in-flight Qwen load (measured load plus
+# inference gate is ~3.3 s) instead of returning INITIALIZING on the first request.
+QWEN_READY_WAIT_SECONDS = 25.0
+
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+_PROSE_NUMBER = re.compile(r"(?<![\w.])[-+]?\d+(?:\.\d+)?(?![\w.])")
+
+
+def _prose_numbers(text: str, out: set[Decimal]) -> None:
+    """Allow numbers written in deterministic reason text sent to Qwen.
+
+    Qwen may quote an explanation verbatim. Those values were computed by the
+    deterministic services, so quoting them is not an invented claim. Numbers absent
+    from both the structured payload and this authoritative prose are still rejected.
+    """
+
+    for token in _PROSE_NUMBER.findall(text or ""):
+        try:
+            out.add(Decimal(token))
+        except Exception:  # noqa: BLE001 - a non-numeric token is not a claim
+            continue
 
 
 def _numbers(value: Any, out: set[Decimal]) -> None:
@@ -58,6 +101,64 @@ def _numbers(value: Any, out: set[Decimal]) -> None:
             _numbers(item, out)
 
 
+def _with_ai_status(
+    result: MarketIntelligence,
+    status: QwenStatus,
+    error: str,
+    latency_ms: float | None = None,
+) -> MarketIntelligence:
+    warnings = list(result.warnings)
+    if status is not QwenStatus.USED:
+        warnings.append(error)
+    return result.model_copy(
+        update={
+            "warnings": list(dict.fromkeys(warnings)),
+            "ai_status": QwenMetadata(
+                used=False,
+                status=status,
+                latency_ms=latency_ms,
+                error=error,
+            ),
+        }
+    )
+
+
+def _decision_reason(planning_result: Any, evaluation: Any, plan: Any) -> str:
+    if plan is not None:
+        return (
+            f"Deterministic plan {plan.plan_status.value} with execution eligibility "
+            f"{plan.execution_eligibility.value}; strategy gate "
+            f"{planning_result.strategy_validation_status.value}."
+        )
+    reasons = [reason.message for reason in planning_result.rejection_reasons]
+    if not reasons:
+        reasons = [reason.message for reason in evaluation.wait_reasons]
+    suffix = "; ".join(reasons[:3]) if reasons else "no eligible deterministic candidate"
+    return (
+        f"No trade plan was constructed ({planning_result.status.value}): {suffix}. "
+        "WAIT and NO_TRADE remain valid outcomes."
+    )
+
+
+def _fallback_interpretation(condition: Any, assessment: Any, action: str) -> str:
+    return (
+        f"{condition.summary} PATRON assessment is {assessment.status.value}: "
+        f"{assessment.reasons[0] if assessment.reasons else 'no reason recorded.'} "
+        f"Deterministic decision is {action}. Qwen interpretation is not available."
+    )
+
+
+def _fallback_forecast_text(source: Any, assessment: Any) -> str:
+    if source is None:
+        return "No PATRON source evidence is available; the deterministic market view is unchanged."
+    direction = assessment.forecast_direction or "neutral"
+    usable = "usable" if assessment.usable_in_decision else "not usable for the decision"
+    return (
+        f"PATRON {source.model_version} median path is {direction}; assessment "
+        f"{assessment.status.value} and {usable}. This is source evidence, not an instruction."
+    )
+
+
 class IntelligenceService:
     def __init__(
         self,
@@ -67,15 +168,21 @@ class IntelligenceService:
         planning: Any,
         knowledge: KnowledgeBase | None = None,
         kie: Any | None = None,
+        forecast: Any | None = None,
         clock: Callable[[], datetime] | None = None,
+        qwen_ready_wait_seconds: float = QWEN_READY_WAIT_SECONDS,
     ) -> None:
         self._analysis = analysis
         self._strategies = strategies
         self._planning = planning
         self._knowledge = knowledge or KnowledgeBase()
         self._kie = kie
+        self._forecast = forecast
         self._clock = clock or _now
+        self._qwen_ready_wait_seconds = max(0.0, float(qwen_ready_wait_seconds))
         self._cache: dict[str, tuple[float, TradingIntelligence]] = {}
+        self._market_cache: dict[str, tuple[float, MarketIntelligence]] = {}
+        self._market_lock = threading.Lock()
         self._last_error: str | None = None
 
     def current(self, *, use_qwen: bool = True, refresh: bool = False) -> TradingIntelligence:
@@ -96,6 +203,7 @@ class IntelligenceService:
             return cached[1]
 
         if use_qwen:
+            self._ensure_qwen_loading()
             deterministic = self._with_qwen(deterministic, planning_result, snapshot, evaluation)
         else:
             deterministic = deterministic.model_copy(
@@ -107,8 +215,541 @@ class IntelligenceService:
                     )
                 }
             )
-        self._cache[cache_key] = (now_monotonic, deterministic)
+        if deterministic.qwen.status is not QwenStatus.INITIALIZING:
+            # Timestamp at write time: narration can take tens of seconds, and a
+            # pre-inference timestamp would make the entry immediately stale.
+            self._cache[cache_key] = (time.monotonic(), deterministic)
         return deterministic
+
+    def _ensure_qwen_loading(self) -> None:
+        """Ask KIE to warm in the background without blocking this request."""
+
+        ensure = getattr(self._kie, "ensure_loading", None)
+        if ensure is None:
+            return
+        try:
+            ensure()
+        except Exception:  # noqa: BLE001 - status remains authoritative
+            logger.debug("KIE background initialization could not be started", exc_info=True)
+
+    def _wait_for_qwen_ready(self) -> tuple[bool, float]:
+        """Bounded wait for the background load; returns (ready, waited seconds)."""
+
+        wait = getattr(self._kie, "wait_until_ready", None)
+        if wait is None or self._qwen_ready_wait_seconds <= 0:
+            return bool(getattr(self._kie, "ready", False)), 0.0
+        started = time.perf_counter()
+        try:
+            ready = bool(wait(self._qwen_ready_wait_seconds))
+        except Exception:  # noqa: BLE001 - deterministic output must survive
+            logger.debug("Qwen readiness wait failed", exc_info=True)
+            ready = bool(getattr(self._kie, "ready", False))
+        return ready, time.perf_counter() - started
+
+    def _with_qwen_readiness(
+        self, result: MarketIntelligence, *, waited_seconds: float
+    ) -> MarketIntelligence:
+        health_state: str | None = None
+        if self._kie is not None:
+            try:
+                health_state = str(getattr(self._kie, "health_state", "") or "") or None
+            except Exception:  # noqa: BLE001 - diagnostics only
+                health_state = None
+        return result.model_copy(
+            update={
+                "readiness": result.readiness.model_copy(
+                    update={
+                        "qwen": qwen_readiness(
+                            result.ai_status,
+                            health_state=health_state,
+                            waited_seconds=waited_seconds,
+                        )
+                    }
+                )
+            }
+        )
+
+    def _qwen_not_ready(self) -> tuple[QwenStatus, str]:
+        state = str(getattr(self._kie, "health_state", "") or "")
+        detail: str | None = None
+        try:
+            detail = self._kie.status().get("last_error")
+        except Exception:  # noqa: BLE001 - diagnostics must never block the fallback
+            detail = None
+        if state == "INITIALIZING":
+            return (
+                QwenStatus.INITIALIZING,
+                "Qwen is initializing on the AMD Vulkan backend. Deterministic interpretation returned.",
+            )
+        if state == "GPU_BACKEND_UNAVAILABLE":
+            return (
+                QwenStatus.UNAVAILABLE,
+                f"Qwen GPU backend unavailable: {detail or 'Vulkan did not initialize.'}",
+            )
+        if state == "GPU_MEMORY_INSUFFICIENT":
+            return (
+                QwenStatus.UNAVAILABLE,
+                f"Qwen GPU memory is insufficient: {detail or 'the model does not fit the VRAM budget.'}",
+            )
+        if state == "INFERENCE_FAILED":
+            return (
+                QwenStatus.UNAVAILABLE,
+                f"Qwen inference failed: {detail or 'the readiness generation failed.'}",
+            )
+        if state == "MODEL_NOT_FOUND":
+            return (QwenStatus.UNAVAILABLE, f"Qwen model not found: {detail or 'artifact missing.'}")
+        if state == "MODEL_LOAD_FAILED":
+            return (QwenStatus.UNAVAILABLE, f"Qwen model failed to load: {detail or 'runtime error.'}")
+        return (
+            QwenStatus.UNAVAILABLE,
+            "Qwen is not initialized. Start it with POST /api/v1/kie/load.",
+        )
+
+    # -- unified, forecast-aware market intelligence -------------------------
+    def market_intelligence(
+        self, *, use_qwen: bool = True, refresh: bool = False
+    ) -> MarketIntelligence:
+        """Assemble market, PATRON evidence, deterministic risk and optional Qwen.
+
+        The cache is keyed by the market snapshot and forecast run, so a newer bar
+        can never reuse an older Qwen answer. Repeated frontend components share
+        one inference result.
+        """
+
+        if use_qwen:
+            self._ensure_qwen_loading()
+        planning_result = self._planning.current(refresh=refresh)
+        snapshot = self._analysis.snapshot(refresh=refresh)
+        evaluation = self._strategies.evaluate(strategy_id="trend_pullback", refresh=False)
+        if snapshot.snapshot_id != planning_result.market_snapshot_id:
+            snapshot = self._analysis.snapshot(refresh=True)
+        base = self._deterministic(
+            planning_result=planning_result,
+            snapshot=snapshot,
+            evaluation=evaluation,
+        )
+        run = self._forecast.latest() if self._forecast is not None else None
+        source, assessment = assess_forecast(run, snapshot, self._clock())
+        condition = market_condition(snapshot)
+        plan = planning_result.plan
+        overlay = build_chart_overlay(snapshot, condition, plan)
+        bullish, bearish = evidence_bullets(snapshot, assessment, source)
+        decision_reason = _decision_reason(planning_result, evaluation, plan)
+        warnings = list(
+            dict.fromkeys(
+                [
+                    *base.warnings,
+                    "PATRON is probabilistic source evidence; deterministic analysis and risk remain authoritative.",
+                ]
+            )
+        )
+        if assessment.status is not ForecastAssessmentStatus.VALID:
+            warnings.extend(
+                f"PATRON assessment {assessment.status.value}: {reason}"
+                for reason in assessment.reasons[:3]
+            )
+        warnings = list(dict.fromkeys(warnings))
+        refs = list(dict.fromkeys([*base.evidence_refs, "forecast.assessment", "forecast.source"]))
+        if run and run.get("id"):
+            refs.append(f"forecast:{run['id']}")
+        unavailable: list[str] = ["position_size"]
+        if source is None:
+            unavailable.append("patron_forecast")
+        if not assessment.usable_in_decision:
+            unavailable.append("patron_forecast_usable_for_decision")
+        if plan is None:
+            unavailable.append("trade_plan")
+
+        latest_market = snapshot.provenance.last_closed_candle_time
+        data_freshness = {
+            "market_as_of": latest_market.isoformat() if latest_market else None,
+            "forecast_as_of": source.forecast_as_of.isoformat()
+            if source and source.forecast_as_of
+            else None,
+            "forecast_age_seconds": assessment.freshness_seconds,
+            "market_age_seconds": round((self._clock() - latest_market).total_seconds(), 1)
+            if latest_market
+            else None,
+            "market_is_stale": snapshot.is_stale,
+            "forecast_is_stale": assessment.status is ForecastAssessmentStatus.STALE,
+            "bar_seconds": 900,
+        }
+        model_versions = {
+            "market_feature": snapshot.feature_version,
+            "strategy": evaluation.strategy_version,
+            "strategy_config": evaluation.config_version,
+            "plan": plan.plan_version if plan is not None else None,
+            "risk_policy": plan.risk_policy_version if plan is not None else None,
+            "patron": source.model_version if source is not None else None,
+            "patron_feature": source.feature_version if source is not None else None,
+            "qwen": None,
+        }
+        if not use_qwen:
+            initial_ai_status = QwenMetadata(
+                used=False,
+                status=QwenStatus.DISABLED,
+                error="Qwen narration was not requested.",
+            )
+        elif self._kie is None:
+            initial_ai_status = QwenMetadata(
+                used=False,
+                status=QwenStatus.UNAVAILABLE,
+                error="The embedded Qwen runtime is not configured.",
+            )
+        elif not getattr(self._kie, "enabled", False):
+            initial_ai_status = QwenMetadata(
+                used=False,
+                status=QwenStatus.DISABLED,
+                error="Qwen is disabled by configuration.",
+            )
+        elif getattr(self._kie, "ready", False):
+            initial_ai_status = QwenMetadata(used=False, status=QwenStatus.UNAVAILABLE)
+        else:
+            qwen_status, message = self._qwen_not_ready()
+            initial_ai_status = QwenMetadata(
+                used=False, status=qwen_status, error=message
+            )
+        readiness = build_readiness(
+            snapshot=snapshot,
+            planning_result=planning_result,
+            plan=plan,
+            assessment=assessment,
+            source=source,
+            ai_status=initial_ai_status,
+            qwen_health_state=str(getattr(self._kie, "health_state", "") or "") or None
+            if self._kie is not None
+            else None,
+            qwen_wait_seconds=None,
+            now=self._clock(),
+        )
+        result = MarketIntelligence(
+            request_id=planning_result.request_id,
+            generated_at=self._clock(),
+            data_as_of=snapshot.data_as_of,
+            is_stale=snapshot.is_stale,
+            symbol=snapshot.symbol,
+            timeframe=snapshot.timeframe,
+            chart_overlay=overlay,
+            market_snapshot={
+                "provider": snapshot.provider,
+                "last_price": snapshot.last_price,
+                "atr14": snapshot.volatility.atr14,
+                "atr_percent": snapshot.volatility.atr_percent,
+                "ema9": snapshot.trend.ema9,
+                "ema21": snapshot.trend.ema21,
+                "ema50": snapshot.trend.ema50,
+                "rsi14": snapshot.momentum.rsi14,
+                "macd": snapshot.momentum.macd,
+                "macd_histogram": snapshot.momentum.macd_histogram,
+                "validation": snapshot.validation.model_dump(mode="json"),
+                "provenance": snapshot.provenance.model_dump(mode="json"),
+            },
+            market_condition=condition,
+            forecast_source=source,
+            forecast_assessment=assessment,
+            ai_market_interpretation=_fallback_interpretation(condition, assessment, base.action.value),
+            ai_forecast_interpretation=_fallback_forecast_text(source, assessment),
+            bullish_evidence=bullish,
+            bearish_evidence=bearish,
+            strategy_candidates=base.strategy_comparison,
+            readiness=readiness,
+            decision=base.action,
+            decision_reason=decision_reason,
+            trade_plan=unified_plan(plan),
+            risk_validation=risk_view(planning_result, plan),
+            invalidation_conditions=list(plan.invalidation_conditions) if plan is not None else [],
+            data_freshness=data_freshness,
+            model_versions=model_versions,
+            evidence_refs=refs,
+            warnings=warnings,
+            unavailable_fields=list(dict.fromkeys(unavailable)),
+            ai_status=initial_ai_status,
+        )
+
+        key = "|".join(
+            [
+                snapshot.snapshot_id,
+                evaluation.evaluation_id,
+                base.plan_id or "no-plan",
+                str(run.get("id")) if run else "no-forecast",
+                str(use_qwen),
+            ]
+        )
+        now_monotonic = time.monotonic()
+        cached = self._market_cache.get(key)
+        if not refresh and cached and now_monotonic - cached[0] < 45.0:
+            return cached[1]
+        if not use_qwen:
+            self._market_cache[key] = (time.monotonic(), result)
+            return result
+        waited_seconds = 0.0
+        if (
+            self._kie is not None
+            and getattr(self._kie, "enabled", False)
+            and not getattr(self._kie, "ready", False)
+        ):
+            # The first request after startup waits for the real inference gate instead
+            # of reporting INITIALIZING while the worker is already warming the model.
+            _, waited_seconds = self._wait_for_qwen_ready()
+        with self._market_lock:
+            # Another request may have completed the same inference while waiting.
+            cached = self._market_cache.get(key)
+            if not refresh and cached and time.monotonic() - cached[0] < 45.0:
+                return cached[1]
+            if self._kie is None:
+                updated = _with_ai_status(
+                    result,
+                    QwenStatus.UNAVAILABLE,
+                    "The embedded Qwen runtime is not configured.",
+                )
+            elif not getattr(self._kie, "enabled", False):
+                updated = _with_ai_status(
+                    result, QwenStatus.DISABLED, "Qwen is disabled by configuration."
+                )
+            elif not getattr(self._kie, "ready", False):
+                qwen_status, message = self._qwen_not_ready()
+                updated = _with_ai_status(result, qwen_status, message)
+            else:
+                updated = self._market_with_qwen(
+                    result,
+                    base=base,
+                    snapshot=snapshot,
+                    evaluation=evaluation,
+                    planning_result=planning_result,
+                    source=source,
+                    assessment=assessment,
+                    condition=condition,
+                    run=run,
+                )
+            updated = self._with_qwen_readiness(updated, waited_seconds=waited_seconds)
+            if updated.ai_status.status is not QwenStatus.INITIALIZING:
+                # Timestamp at write time: a 44 s inference plus a pre-inference
+                # timestamp would evict the entry before the next poll reads it.
+                self._market_cache[key] = (time.monotonic(), updated)
+            return updated
+
+    def _market_with_qwen(
+        self,
+        result: MarketIntelligence,
+        *,
+        base: TradingIntelligence,
+        snapshot: Any,
+        evaluation: Any,
+        planning_result: Any,
+        source: Any,
+        assessment: Any,
+        condition: Any,
+        run: dict[str, Any] | None,
+    ) -> MarketIntelligence:
+        # Keep the prompt under the embedded 3072-token budget. Full service dumps
+        # contain scores/checks that Qwen does not need; the validator still sees
+        # every authoritative number from the complete base object below.
+        assessment_payload = assessment.model_dump(mode="json")
+        assessment_payload["reasons"] = assessment_payload.get("reasons", [])[:4]
+        assessment_payload["conflicts"] = assessment_payload.get("conflicts", [])[:4]
+        payload = {
+            "authoritative_action": result.decision.value,
+            "decision_reason": result.decision_reason,
+            "strategy_validation_status": result.strategy_candidates[0].validation_status
+            if result.strategy_candidates
+            else "PENDING",
+            "market_snapshot": result.market_snapshot,
+            "market_condition": condition.model_dump(mode="json"),
+            "recent_ohlcv": [
+                {
+                    "time": int(getattr(candle, "time", 0)),
+                    "open": getattr(candle, "open", None),
+                    "high": getattr(candle, "high", None),
+                    "low": getattr(candle, "low", None),
+                    "close": getattr(candle, "close", None),
+                    "volume": getattr(candle, "real_volume", None),
+                }
+                for candle in (
+                    self._analysis.recent_candles(6)
+                    if hasattr(self._analysis, "recent_candles")
+                    else []
+                )
+            ],
+            "patron_source": {
+                "model_id": source.model_id,
+                "model_version": source.model_version,
+                "feature_version": source.feature_version,
+                "checkpoint_sha256": source.checkpoint_sha256,
+                "source_hash": source.source_hash,
+                "forecast_as_of": source.forecast_as_of.isoformat()
+                if source.forecast_as_of
+                else None,
+                "input_last_bar_at": source.input_last_bar_at.isoformat()
+                if source.input_last_bar_at
+                else None,
+                "horizon_minutes": source.horizon_minutes,
+                "reference_close": source.reference_close,
+                "range_quantiles": source.range_quantiles,
+                "barrier_probabilities": source.barrier_probabilities,
+                "momentum": source.momentum,
+                "data_quality": source.data_quality,
+                "freshness_seconds": source.freshness_seconds,
+            }
+            if source is not None
+            else None,
+            "forecast_assessment": assessment_payload,
+            "strategy": {
+                "strategy_id": evaluation.strategy_id,
+                "strategy_version": evaluation.strategy_version,
+                "decision": evaluation.decision.value,
+                "direction": evaluation.direction.value,
+                "quality_score": evaluation.quality.score,
+                "quality_label": evaluation.quality.label.value,
+                "confirmation": evaluation.confirmation_status.value,
+                "wait_reasons": [item.message for item in evaluation.wait_reasons[:2]],
+                "rejection_reasons": [item.message for item in evaluation.rejection_reasons[:2]],
+            },
+            "strategy_candidates": [
+                {
+                    "strategy_id": item.strategy_id,
+                    "decision": item.decision,
+                    "quality_score": item.quality_score,
+                    "validation_status": item.validation_status,
+                    "eligible": item.eligible,
+                }
+                for item in result.strategy_candidates
+            ],
+            "trade_plan": result.trade_plan.model_dump(mode="json")
+            if result.trade_plan
+            else None,
+            "risk_validation": {
+                **result.risk_validation.model_dump(mode="json"),
+                "checks": result.risk_validation.checks[:6],
+            },
+            "bullish_evidence": result.bullish_evidence,
+            "bearish_evidence": result.bearish_evidence,
+            "allowed_evidence_refs": result.evidence_refs,
+        }
+        prompt = (
+            "Return ONE JSON object only with exactly these keys: action, market_summary, "
+            "forecast_interpretation, bullish_evidence, bearish_evidence, uncertainty, "
+            "missing_information, next_action, evidence_refs, warnings.\n"
+            "Types are strict: action is a string; market_summary, forecast_interpretation, "
+            "uncertainty and next_action are strings; the remaining four are ARRAYS of strings. "
+            "Write [] for an empty array, never the string \"none\".\n"
+            f"action MUST equal \"{result.decision.value}\". "
+            "The forecast_assessment status and usable_in_decision are authoritative: explain "
+            "them, never change them and never claim the forecast is better than its status. "
+            "Do not invent numbers, confidence scores, prices, entries, stops, targets or sizes. "
+            "Use only numbers and evidence refs present in AUTHORITATIVE. Evidence refs must be "
+            "copied from allowed_evidence_refs. Do not recommend buying, selling or executing; "
+            "the strategy gate is PENDING. Explain bullish and bearish evidence, any "
+            "inconsistency between PATRON and the deterministic market, and missing information. "
+            "next_action must be a complete instruction sentence, not a single word. "
+            "Keep every string under 45 words and the whole JSON under 320 words.\n"
+            'Example shape: {"action":"WAIT","market_summary":"...",'
+            '"forecast_interpretation":"...","bullish_evidence":[],"bearish_evidence":[],'
+            '"uncertainty":"...","missing_information":[],"next_action":"...",'
+            '"evidence_refs":["forecast.assessment"],"warnings":[]}\nAUTHORITATIVE:\n'
+        )
+        # Never cut JSON mid-object: drop optional sections until the payload fits.
+        for optional in ("recent_ohlcv", "strategy_candidates", "trade_plan", "risk_validation"):
+            if len(
+                json.dumps(payload, ensure_ascii=False, default=str, separators=(",", ":"))
+            ) <= 8500:
+                break
+            payload.pop(optional, None)
+        prompt += json.dumps(
+            payload,
+            ensure_ascii=False,
+            default=str,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        started = time.perf_counter()
+        responded = False
+        try:
+            response = self._kie.chat(
+                RunRequest(
+                    messages=_messages(prompt),
+                    mode=Mode.FAST,
+                    max_tokens=800,
+                    temperature=0.0,
+                    top_p=0.9,
+                )
+            )
+            responded = True
+            parsed = parse_market_output(str(response.get("text") or ""))
+            allowed_numbers: set[Decimal] = set()
+            _numbers(payload, allowed_numbers)
+            _numbers(base.model_dump(mode="json"), allowed_numbers)
+            for text in (
+                *assessment_payload.get("reasons", []),
+                *assessment_payload.get("conflicts", []),
+            ):
+                _prose_numbers(str(text), allowed_numbers)
+            notes = validate_market_output(
+                parsed,
+                authoritative_action=result.decision.value,
+                allowed_refs=set(result.evidence_refs),
+                allowed_numbers=allowed_numbers,
+            )
+            model = self._model_label()
+            return result.model_copy(
+                update={
+                    "ai_market_interpretation": parsed.market_summary,
+                    "ai_forecast_interpretation": parsed.forecast_interpretation,
+                    "bullish_evidence": list(
+                        dict.fromkeys([*result.bullish_evidence, *parsed.bullish_evidence])
+                    )[:10],
+                    "bearish_evidence": list(
+                        dict.fromkeys([*result.bearish_evidence, *parsed.bearish_evidence])
+                    )[:10],
+                    "unavailable_fields": list(
+                        dict.fromkeys(
+                            [*result.unavailable_fields, *parsed.missing_information]
+                        )
+                    ),
+                    "warnings": list(dict.fromkeys([*result.warnings, *parsed.warnings])),
+                    "ai_status": QwenMetadata(
+                        used=True,
+                        status=QwenStatus.USED,
+                        model=model,
+                        run_id=response.get("run_id"),
+                        latency_ms=round((time.perf_counter() - started) * 1000.0, 2),
+                        validation_notes=notes,
+                    ),
+                    "model_versions": {
+                        **result.model_versions,
+                        "qwen": model or "Qwen3-4B",
+                    },
+                }
+            )
+        except Exception as exc:  # noqa: BLE001 - never break the deterministic response
+            self._last_error = str(exc)
+            logger.warning("Unified Qwen narration rejected or failed: %s", exc)
+            status = QwenStatus.INVALID if responded else QwenStatus.UNAVAILABLE
+            if "timeout" in str(exc).lower() or "timed out" in str(exc).lower():
+                status = QwenStatus.TIMEOUT
+            return _with_ai_status(
+                result,
+                status,
+                f"Qwen narration was rejected or unavailable ({exc}); deterministic interpretation returned.",
+                latency_ms=round((time.perf_counter() - started) * 1000.0, 2),
+            )
+
+    def _model_label(self) -> str | None:
+        if self._kie is None:
+            return None
+        try:
+            status = self._kie.status()
+            identity = status.get("identity") or {}
+            artifacts = status.get("artifacts") or {}
+            model_info = artifacts.get("model") or {}
+            file_name = model_info.get("file") or "Qwen3-4B"
+            quant = model_info.get("quant")
+            runtime = identity.get("runtime_tag")
+            model = identity.get("description") or f"{file_name}{f' ({quant})' if quant else ''}"
+            if runtime and not identity.get("description"):
+                model = f"{model} · llama.cpp {runtime}"
+            return str(model)
+        except Exception:  # noqa: BLE001
+            return None
 
     def status(self) -> IntelligenceStatus:
         model = None
@@ -119,7 +760,9 @@ class IntelligenceService:
             ready = bool(getattr(self._kie, "ready", False))
             try:
                 status = self._kie.status()
-                model = (status.get("identity") or {}).get("description") or status.get("model")
+                model = status.get("model_name") or (status.get("identity") or {}).get("description")
+                if not model and isinstance(status.get("model"), dict):
+                    model = status["model"].get("description")
             except Exception:  # noqa: BLE001 - status must never block
                 model = None
         return IntelligenceStatus(
@@ -278,12 +921,13 @@ class IntelligenceService:
                 }
             )
         if not getattr(self._kie, "ready", False):
+            qwen_status, message = self._qwen_not_ready()
             return base.model_copy(
                 update={
                     "qwen": QwenMetadata(
                         used=False,
-                        status=QwenStatus.UNAVAILABLE,
-                        error="The Qwen model is not loaded. Deterministic explanation returned.",
+                        status=qwen_status,
+                        error=message,
                     )
                 }
             )

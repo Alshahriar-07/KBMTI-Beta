@@ -68,6 +68,20 @@ class KieMemoryBudgetError(KieError):
         super().__init__("KIE_MEMORY_BUDGET", message, 507, details)
 
 
+class GpuBackendUnavailableError(KieError):
+    """Vulkan did not initialise or exposed no GPU; CPU fallback is not attempted."""
+
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
+        super().__init__("GPU_BACKEND_UNAVAILABLE", message, 503, details)
+
+
+class InferenceFailedError(KieError):
+    """The model loaded but a real generation (including the readiness smoke test) failed."""
+
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
+        super().__init__("INFERENCE_FAILED", message, 500, details)
+
+
 class PromptTooLongError(KieError):
     def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__("PROMPT_TOO_LONG", message, 422, details)

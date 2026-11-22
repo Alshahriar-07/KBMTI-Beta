@@ -16,7 +16,9 @@ import type {
   Health,
   Indicators,
   JournalRecordsResponse,
+  KieStatus,
   LearningStatus,
+  MarketIntelligence,
   ModelRecord,
   Mt5Status,
   PlanningResult,
@@ -165,8 +167,14 @@ export const api = {
 
   assistantCurrent: (useQwen = true) =>
     request<TradingIntelligence>(`/api/v1/assistant/current?use_qwen=${useQwen ? "true" : "false"}`),
+  marketIntelligence: (useQwen = true, refresh = false) =>
+    request<MarketIntelligence>(
+      `/api/v1/assistant/market-intelligence?use_qwen=${useQwen ? "true" : "false"}&refresh=${refresh ? "true" : "false"}`,
+    ),
   planningCurrent: () => request<PlanningResult>("/api/v1/planning/current"),
   assistantStatus: () => request<AssistantStatus>("/api/v1/assistant/status"),
+  kieStatus: () => request<KieStatus>("/api/v1/kie/status"),
+  kieLoad: () => post<{ loaded: boolean; status: KieStatus }>("/api/v1/kie/load"),
 
   journalRecords: () => request<JournalRecordsResponse>("/api/v1/journal/records"),
   journalSummary: () => request<OutcomeSummary>("/api/v1/journal/summary"),

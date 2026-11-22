@@ -46,6 +46,25 @@ class ModelState(StrEnum):
     ERROR = "error"
 
 
+class HealthState(StrEnum):
+    """Inference health, distinct from the coarse loader lifecycle.
+
+    ``READY`` is only reported after the model file, GPU backend, layer offload and a
+    real one-shot generation have all been verified. The loader's ``state`` remains a
+    compatibility field; callers that need the real answer use this state.
+    """
+
+    NOT_INITIALIZED = "NOT_INITIALIZED"
+    INITIALIZING = "INITIALIZING"
+    MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
+    MODEL_LOAD_FAILED = "MODEL_LOAD_FAILED"
+    GPU_BACKEND_UNAVAILABLE = "GPU_BACKEND_UNAVAILABLE"
+    GPU_MEMORY_INSUFFICIENT = "GPU_MEMORY_INSUFFICIENT"
+    READY = "READY"
+    INFERENCE_FAILED = "INFERENCE_FAILED"
+    STOPPING = "STOPPING"
+
+
 class EventType(StrEnum):
     """Server-sent events produced by a run."""
 

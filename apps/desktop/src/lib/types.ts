@@ -796,6 +796,300 @@ export interface TradingIntelligence {
   disclaimer: string;
 }
 
+export type ForecastAssessmentStatus =
+  | "VALID"
+  | "LOW_CONFIDENCE"
+  | "CONFLICTING_EVIDENCE"
+  | "STALE"
+  | "INVALID"
+  | "UNAVAILABLE";
+
+export interface ForecastSourceView {
+  provider: "patron";
+  model_id: string;
+  model_version: string;
+  checkpoint: string | null;
+  checkpoint_sha256: string | null;
+  feature_version: string | null;
+  generated_at: string | null;
+  forecast_as_of: string | null;
+  input_last_bar_at: string | null;
+  horizon_candles: number;
+  horizon_minutes: number;
+  reference_close: number | null;
+  range_quantiles: ForecastQuantileStep[];
+  predicted_candles: Array<{
+    sequence: number;
+    timestamp_utc: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  }>;
+  barrier_probabilities: Record<string, number>;
+  momentum: {
+    class_probabilities?: Record<string, number>;
+    predicted_class?: string;
+  };
+  data_quality: Record<string, unknown>;
+  source_hash: string;
+  freshness_seconds: number | null;
+}
+
+export interface ForecastAssessmentView {
+  status: ForecastAssessmentStatus;
+  reasons: string[];
+  conflicts: string[];
+  usable_in_decision: boolean;
+  confidence_score: null;
+  freshness_seconds: number | null;
+  interval_width_atr: number | null;
+  barrier_margin: number | null;
+  momentum_margin: number | null;
+  forecast_direction: string | null;
+  deterministic_direction: string | null;
+  median_path_atr: number | null;
+  direction_conflict_material: boolean | null;
+  horizon_minutes: number | null;
+}
+
+export interface MarketConditionView {
+  trend: string;
+  trend_strength: string;
+  trend_alignment: string;
+  structure: string;
+  momentum: string;
+  momentum_phase: string;
+  volatility: string;
+  volatility_phase: string;
+  regime: string;
+  direction: string;
+  summary: string;
+}
+
+export interface UnifiedTradePlan {
+  plan_id: string;
+  strategy_id: string;
+  strategy_version: string;
+  direction: string;
+  plan_status: string;
+  entry_zone: Record<string, string>;
+  suggested_entry: string;
+  confirmation_level: string | null;
+  stop_loss: string;
+  stop_basis: string;
+  take_profits: Array<Record<string, string>>;
+  risk_reward: Record<string, string>;
+  invalidation_conditions: string[];
+  confirmation_requirements: string[];
+  expires_at: string;
+  risk_validation_status: string;
+  execution_eligibility: string;
+}
+
+export interface ChartLevelView {
+  id: string;
+  kind: "SUPPORT" | "RESISTANCE" | "LIQUIDITY";
+  price: number;
+  label: string;
+  touches: number | null;
+  time: string | null;
+  detail: string;
+}
+
+export interface ChartMarkerView {
+  id: string;
+  kind: string;
+  price: number;
+  time: string;
+  label: string;
+  detail: string;
+  direction: "BULLISH" | "BEARISH" | "NEUTRAL";
+}
+
+export interface ScenarioPoint {
+  offset_bars: number;
+  price: number;
+}
+
+export type ScenarioId =
+  | "bullish_continuation"
+  | "bearish_reversal"
+  | "bearish_continuation"
+  | "bullish_reversal"
+  | "sideways_consolidation";
+
+export interface MarketScenario {
+  id: ScenarioId;
+  title: string;
+  bias: "BULLISH" | "BEARISH" | "SIDEWAYS";
+  available: boolean;
+  condition: string;
+  trigger: number | null;
+  target: number | null;
+  invalidation: number | null;
+  confirmation: string;
+  invalidation_text: string;
+  evidence_for: string[];
+  evidence_against: string[];
+  unavailable_reason: string | null;
+  structure: string;
+  data_as_of: string | null;
+  data_is_stale: boolean;
+  path: ScenarioPoint[];
+}
+
+export interface ChartOverlay {
+  levels: ChartLevelView[];
+  structure: ChartMarkerView[];
+  scenarios: MarketScenario[];
+  method_note: string;
+}
+
+export interface ComponentReadiness {
+  status: string;
+  detail: string;
+  reason_code: string | null;
+  missing_inputs: string[];
+}
+
+export interface PipelineMarketReadiness extends ComponentReadiness {
+  status: "READY" | "STALE" | "UNAVAILABLE";
+  data_as_of: string | null;
+  freshness_seconds: number | null;
+}
+
+export interface PipelinePatronReadiness extends ComponentReadiness {
+  status: "AVAILABLE" | "CONFLICTING" | "LOW_CONFIDENCE" | "STALE" | "INVALID" | "UNAVAILABLE";
+  assessment: ForecastAssessmentStatus;
+  usable_in_decision: boolean;
+  conflicts: string[];
+  freshness_seconds: number | null;
+  median_path_atr: number | null;
+}
+
+export interface PipelineQwenReadiness extends ComponentReadiness {
+  status: "INITIALIZING" | "READY" | "FAILED" | "DISABLED" | "UNAVAILABLE";
+  health_state: string | null;
+  waited_seconds: number | null;
+}
+
+export interface PipelineStrategyReadiness extends ComponentReadiness {
+  status: "PENDING" | "PASSED" | "FAILED";
+  reviewed_cases: number | null;
+  required_cases: number | null;
+}
+
+export interface PipelineTradePlanReadiness extends ComponentReadiness {
+  status: "AVAILABLE" | "UNAVAILABLE";
+  plan_status: string | null;
+}
+
+export interface PipelineRiskReadiness extends ComponentReadiness {
+  status: "APPROVED" | "REJECTED" | "NOT_EVALUATED";
+}
+
+export interface PipelinePositionSizeReadiness extends ComponentReadiness {
+  status: "AVAILABLE" | "NOT_CALCULATED";
+}
+
+export interface PipelineExecutionReadiness extends ComponentReadiness {
+  status: "DISABLED";
+}
+
+export interface PipelineReadiness {
+  market: PipelineMarketReadiness;
+  patron: PipelinePatronReadiness;
+  qwen: PipelineQwenReadiness;
+  strategy: PipelineStrategyReadiness;
+  trade_plan: PipelineTradePlanReadiness;
+  risk: PipelineRiskReadiness;
+  position_size: PipelinePositionSizeReadiness;
+  execution: PipelineExecutionReadiness;
+}
+
+export interface MarketIntelligence {
+  request_id: string;
+  generated_at: string;
+  data_as_of: string;
+  is_stale: boolean;
+  symbol: string;
+  timeframe: string;
+  market_snapshot: Record<string, unknown>;
+  market_condition: MarketConditionView;
+  chart_overlay: ChartOverlay;
+  forecast_source: ForecastSourceView | null;
+  forecast_assessment: ForecastAssessmentView;
+  ai_market_interpretation: string;
+  ai_forecast_interpretation: string;
+  bullish_evidence: string[];
+  bearish_evidence: string[];
+  strategy_candidates: StrategyComparison[];
+  readiness: PipelineReadiness;
+  decision: "LONG" | "SHORT" | "WAIT" | "NO_TRADE";
+  decision_reason: string;
+  trade_plan: UnifiedTradePlan | null;
+  risk_validation: {
+    status: string;
+    execution_eligibility: string;
+    checks: Array<Record<string, unknown>>;
+    position_size_status: string;
+    position_size: null;
+  };
+  invalidation_conditions: string[];
+  data_freshness: Record<string, unknown>;
+  model_versions: Record<string, string | null>;
+  evidence_refs: string[];
+  warnings: string[];
+  unavailable_fields: string[];
+  ai_status: AssistantQwen;
+  execution: "DISABLED";
+  position_size_status: string;
+  position_size: null;
+  disclaimer: string;
+}
+
+export interface KieHealthStatus {
+  state: string;
+  ready: boolean;
+  message: string;
+  backend: string | null;
+  gpu_name: string | null;
+  gpu_offloaded: boolean;
+  offloaded_layers: number | null;
+  total_layers: number | null;
+  context_size: number | null;
+  initialization_seconds: number | null;
+  last_error: string | null;
+  last_inference_error: string | null;
+  smoke_test: Record<string, unknown>;
+}
+
+export interface KieStatus {
+  enabled: boolean;
+  available: boolean;
+  artifacts_available: boolean;
+  state: string;
+  health_state: string;
+  health_message: string;
+  health: KieHealthStatus;
+  ready: boolean;
+  backend: string | null;
+  accelerated: boolean;
+  model_name: string | null;
+  quantization: string | null;
+  runtime_version: string | null;
+  gpu_name: string | null;
+  vram_mb: number | null;
+  vram_budget_mb: number | null;
+  offloaded_layers: number | null;
+  total_layers: number | null;
+  context_size: number | null;
+  initialization_seconds: number | null;
+  last_error: string | null;
+  last_inference_error: string | null;
+}
+
 export interface AssistantStatus {
   enabled: boolean;
   deterministic_available: boolean;

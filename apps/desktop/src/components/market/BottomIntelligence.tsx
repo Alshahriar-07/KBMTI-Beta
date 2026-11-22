@@ -4,7 +4,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatPercent, formatPrice, formatTimeOnly } from "@/lib/format";
-import type { Candle, ForecastRun, ForecastStatus, PatronStatus } from "@/lib/types";
+import type {
+  Candle,
+  ForecastRun,
+  ForecastStatus,
+  MarketIntelligence,
+  PatronStatus,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 function StripHeader({
@@ -219,6 +225,9 @@ export function BottomIntelligence({
   running,
   onRun,
   currentCandle = null,
+  intelligence = null,
+  intelligenceLoading = false,
+  intelligenceError = null,
 }: {
   forecast: ForecastStatus | null;
   latest: ForecastRun | null;
@@ -226,6 +235,9 @@ export function BottomIntelligence({
   running: boolean;
   onRun: () => void;
   currentCandle?: Candle | null;
+  intelligence?: MarketIntelligence | null;
+  intelligenceLoading?: boolean;
+  intelligenceError?: string | null;
 }) {
   const ready = Boolean(patron?.ready || forecast?.ai_available);
   const output = latest?.output?.patron ?? null;
@@ -244,14 +256,16 @@ export function BottomIntelligence({
     <section className="grid h-full grid-cols-1 divide-y divide-line border-t border-line bg-surface md:grid-cols-2 md:divide-x md:divide-y-0">
       <section className="flex min-h-0 flex-col">
         <StripHeader
-          title="PATRON forecast"
-          badge="AI"
+          title="PATRON source evidence"
+          badge="SOURCE"
           meta={
-            latest?.created_at
-              ? `Generated ${formatTimeOnly(latest.created_at, false)}`
-              : output
-                ? `As of ${formatTimeOnly(output.as_of)}`
-                : "No run"
+            intelligence
+              ? `Assessment ${intelligence.forecast_assessment.status}`
+              : latest?.created_at
+                ? `Generated ${formatTimeOnly(latest.created_at, false)}`
+                : output
+                  ? `As of ${formatTimeOnly(output.as_of)}`
+                  : "No run"
           }
         />
         <div className="flex min-h-0 flex-1 flex-col px-2.5 py-1.5">
@@ -333,41 +347,88 @@ export function BottomIntelligence({
 
       <section className="flex min-h-0 flex-col">
         <StripHeader
-          title="Model status"
-          badge="PATRON"
-          meta={displayState(patron?.state ?? forecast?.state)}
+          title="AI market view"
+          badge={intelligence?.ai_status.used ? "QWEN" : "DETERMINISTIC"}
+          meta={
+            intelligence
+              ? intelligence.ai_status.status
+              : intelligenceLoading
+                ? "Loading"
+                : "Unavailable"
+          }
         />
         <div className="flex min-h-0 flex-1 flex-col px-2.5 py-2">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            <MiniStat label="Model" value={forecast?.model_id ?? "patron-1.0.0"} />
-            <MiniStat
-              label="State"
-              value={displayState(patron?.state ?? forecast?.state)}
-              tone={ready ? "text-bull" : "text-warn"}
-            />
-            <MiniStat
-              label="Parameters"
-              value={patron?.trainable_parameters?.toLocaleString() ?? "—"}
-            />
-            <MiniStat label="Device" value={displayDevice(patron?.device ?? forecast?.device)} />
-          </div>
-          <div className="mt-auto pt-2">
-            <div className="flex items-center justify-between text-[8.5px] text-ink-faint">
-              <span>{ready ? "Model loaded" : "Model unavailable"}</span>
-              <span className="num">
-                {patron?.inference_count ?? 0} run{patron?.inference_count === 1 ? "" : "s"}
-              </span>
+          {intelligence ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Badge
+                  tone={
+                    intelligence.decision === "LONG"
+                      ? "success"
+                      : intelligence.decision === "SHORT"
+                        ? "danger"
+                        : "warning"
+                  }
+                  dot
+                >
+                  {intelligence.decision}
+                </Badge>
+                <span className="text-[9px] text-ink-faint">
+                  Forecast {intelligence.forecast_assessment.status.replaceAll("_", " ")}
+                </span>
+              </div>
+              <p className="mt-1.5 line-clamp-2 text-[9px] leading-relaxed text-ink-muted">
+                {intelligence.ai_market_interpretation}
+              </p>
+              <p className="mt-1 line-clamp-1 text-[8.5px] text-ink-faint">
+                {intelligence.ai_forecast_interpretation}
+              </p>
+              <div className="mt-auto grid grid-cols-2 gap-x-4 gap-y-1 pt-1.5">
+                <MiniStat
+                  label="Forecast evidence"
+                  value={
+                    intelligence.forecast_assessment.usable_in_decision
+                      ? "Usable"
+                      : "Excluded"
+                  }
+                  tone={
+                    intelligence.forecast_assessment.usable_in_decision
+                      ? "text-bull"
+                      : "text-warn"
+                  }
+                />
+                <MiniStat label="AI state" value={intelligence.ai_status.status} />
+                <MiniStat
+                  label="PATRON"
+                  value={intelligence.forecast_source?.model_version ?? "unavailable"}
+                />
+                <MiniStat label="Execution" value={intelligence.execution} />
+              </div>
+            </>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col justify-center">
+              <p className="text-[9.5px] leading-relaxed text-ink-faint">
+                {intelligenceLoading
+                  ? "Building the unified market and PATRON assessment…"
+                  : intelligenceError
+                    ? `AI analysis unavailable: ${intelligenceError}`
+                    : "AI analysis unavailable. Deterministic market data and risk checks remain; no raw PATRON output is shown as a final decision."}
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                <MiniStat label="Model" value={forecast?.model_id ?? "patron-1.0.0"} />
+                <MiniStat
+                  label="PATRON state"
+                  value={displayState(patron?.state ?? forecast?.state)}
+                  tone={ready ? "text-bull" : "text-warn"}
+                />
+                <MiniStat label="Device" value={displayDevice(patron?.device ?? forecast?.device)} />
+                <MiniStat
+                  label="Inference"
+                  value={`${patron?.inference_count ?? 0} runs`}
+                />
+              </div>
             </div>
-            <div className="mt-1 h-[3px] w-full bg-surface-2">
-              <div
-                className={cn("h-full", ready ? "bg-primary/60" : "bg-warn/40")}
-                style={{ width: ready ? "100%" : "4%" }}
-              />
-            </div>
-            <p className="mt-1.5 truncate text-[9px] text-ink-faint" title={patron?.last_error ?? undefined}>
-              {patron?.last_error ?? patron?.message ?? forecast?.message ?? "Model status unavailable."}
-            </p>
-          </div>
+          )}
         </div>
       </section>
 

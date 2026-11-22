@@ -11,6 +11,17 @@ from app.market_data.mt5_gateway import MT5Gateway
 from tests.fake_mt5 import FakeMT5
 
 
+@pytest.fixture(autouse=True)
+def disable_kie_autoload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep fast tests away from the real 2.4 GB model and Vulkan context.
+
+    Production autoloads Qwen by default; only the opt-in ``kie_runtime`` suite should
+    touch the pinned model, and that suite constructs KieService directly.
+    """
+
+    monkeypatch.setenv("KBMTI_KIE_AUTOLOAD", "false")
+
+
 @pytest.fixture
 def terminal_exe(tmp_path: Path) -> Path:
     install = tmp_path / "MetaTrader 5"

@@ -197,7 +197,6 @@ def main() -> int:
         )
 
     close_realised = realised[:, :, 2]
-    close_model = pred_q50[:, :, 2]
     # Baseline 1: persistence (last close unchanged).
     report["baselines"]["persistence"] = {
         "mae_bps": float(np.mean(np.abs(close_realised)) * 10_000),

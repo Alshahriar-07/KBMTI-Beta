@@ -12,6 +12,7 @@ import type {
   ForecastRun,
   ForecastStatus,
   Indicators,
+  MarketIntelligence as MarketIntelligenceView,
   PatronStatus,
   Signal,
 } from "@/lib/types";
@@ -45,6 +46,19 @@ export function OverviewPage() {
     "overview-forecast-latest",
     () => api.forecastLatest(),
     20_000,
+  );
+  // One shared, validated response for every analysis and decision component.
+  // PATRON is still polled only for its source-evidence visualization; it is no
+  // longer the final interpretation shown to the user.
+  const intelligenceScope =
+    symbol.replace("/", "").toUpperCase() === "BTCUSDT" && timeframe === "M15";
+  const intelligence = usePolling<MarketIntelligenceView | null>(
+    `overview-intelligence:${intelligenceScope ? candleTime : "out-of-scope"}`,
+    () =>
+      intelligenceScope
+        ? api.marketIntelligence(true)
+        : Promise.resolve(null),
+    30_000,
   );
   const forecastStatus = usePolling<ForecastStatus>(
     "overview-forecast-status",
@@ -104,6 +118,9 @@ export function OverviewPage() {
                 ? (snapshot?.last_candle ?? snapshot?.forming_candle ?? null)
                 : null
             }
+            intelligence={intelligence.data}
+            intelligenceLoading={intelligence.loading}
+            intelligenceError={intelligence.error}
           />
         </div>
       </div>
@@ -116,6 +133,9 @@ export function OverviewPage() {
         forecast={latestForecast}
         evaluatedAt={forecast?.automation?.last_evaluated_at}
         loading={candles.loading}
+        intelligence={intelligence.data}
+        intelligenceLoading={intelligence.loading}
+        intelligenceError={intelligence.error}
       />
     </div>
   );

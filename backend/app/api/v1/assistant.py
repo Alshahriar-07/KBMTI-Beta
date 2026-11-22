@@ -17,6 +17,7 @@ from app.intelligence.contracts import (
     KnowledgeSearchResponse,
     TradingIntelligence,
 )
+from app.intelligence.market_contracts import MarketIntelligence
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
 
@@ -44,6 +45,17 @@ def current_intelligence(
 @router.post("/explain", response_model=TradingIntelligence)
 def explain(container: ContainerDep, request: ExplainRequest) -> TradingIntelligence:
     return _service(container).current(refresh=True, use_qwen=request.use_qwen)
+
+
+@router.get("/market-intelligence", response_model=MarketIntelligence)
+def market_intelligence(
+    container: ContainerDep,
+    refresh: bool = Query(default=False),
+    use_qwen: bool = Query(default=True),
+) -> MarketIntelligence:
+    """One validated response for every frontend market-analysis component."""
+
+    return _service(container).market_intelligence(refresh=refresh, use_qwen=use_qwen)
 
 
 @router.get("/status", response_model=IntelligenceStatus)

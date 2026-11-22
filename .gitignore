@@ -24,6 +24,7 @@ build/
 
 # Local data and runtime artifacts
 .local/
+/experiments/
 *.db
 *.db-wal
 *.db-shm
@@ -56,3 +57,4 @@ assets.zip
 # Virtual environments (all variants)
 .venv*/
 venv*/
+lastseson.txt

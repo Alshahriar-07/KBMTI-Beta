@@ -12,8 +12,16 @@ from pathlib import Path
 
 import pytest
 
-from app.kie.config import KieConfig
-from app.kie.contracts import Access, Mode, RunRequest, ToolCall, ToolSpec, messages_from_dicts
+from app.kie.config import KieConfig, load_config
+from app.kie.contracts import (
+    Access,
+    HealthState,
+    Mode,
+    RunRequest,
+    ToolCall,
+    ToolSpec,
+    messages_from_dicts,
+)
 from app.kie.core import StreamFilter, validate_prompt_budget
 from app.kie.errors import (
     KieBusyError,
@@ -88,6 +96,9 @@ def test_load_reports_measured_budget(factory: EngineFactory) -> None:
     manager = loaded_manager(config, factory)
     status = manager.status()
     assert status["state"] == "ready"
+    assert status["health_state"] == HealthState.READY
+    assert status["ready"] is True
+    assert status["health"]["smoke_test"]["generated_tokens"] > 0
     assert status["backend"] == "vulkan"
     assert status["accelerated"] is True
     memory = status["memory"]
@@ -108,6 +119,37 @@ def test_unload_returns_to_unloaded(factory: EngineFactory) -> None:
         manager.generate(messages=[])
 
 
+def test_wait_until_ready_loads_in_background(tmp_path: Path, factory: EngineFactory) -> None:
+    service = service_for(tmp_path, make_config(), factory)
+    assert service.ready is False
+    assert service.wait_until_ready(timeout=5.0) is True
+    assert service.ready is True
+    assert service.manager.health_state is HealthState.READY
+
+
+def test_wait_until_ready_times_out_then_recovers(tmp_path: Path) -> None:
+    gate = threading.Event()
+    factory = EngineFactory(gate=gate)
+    service = service_for(tmp_path, make_config(), factory)
+    assert service.wait_until_ready(timeout=0.2) is False
+    assert service.manager.health_state is HealthState.INITIALIZING
+    # The same background load finishes once the engine is released; no second load.
+    gate.set()
+    assert service.wait_until_ready(timeout=5.0) is True
+    assert len(factory.instances) == 1
+    assert factory.instances[0].load_calls == 1
+
+
+def test_wait_until_ready_returns_false_on_load_failure(tmp_path: Path) -> None:
+    factory = EngineFactory(fail_on_load=True)
+    service = service_for(tmp_path, make_config(), factory)
+    started = time.monotonic()
+    assert service.wait_until_ready(timeout=5.0) is False
+    assert time.monotonic() - started < 5.0
+    assert service.manager.health_state is HealthState.MODEL_LOAD_FAILED
+    assert service.ready is False
+
+
 def test_load_is_idempotent(factory: EngineFactory) -> None:
     manager = loaded_manager(make_config(), factory)
     manager.load()
@@ -121,22 +163,30 @@ def test_disabled_manager_refuses_to_load() -> None:
         manager.load()
 
 
-def test_cpu_fallback_when_vulkan_fails(factory: EngineFactory) -> None:
+def test_vulkan_failure_reports_gpu_unavailable_without_cpu_fallback(
+    factory: EngineFactory,
+) -> None:
     factory.fail("vulkan", "no Vulkan device")
-    manager = loaded_manager(make_config(), factory)
+    manager = ModelManager(make_config(), engine_factory=factory)
+    with pytest.raises(ModelLoadFailedError):
+        manager.load()
     status = manager.status()
-    assert status["backend"] == "cpu"
+    assert status["backend"] is None
     assert status["accelerated"] is False
-    assert "no Vulkan device" in (status["fallback_reason"] or "")
-    assert [call[0] for call in factory.calls] == ["vulkan", "cpu"]
-    assert factory.calls[1][1] == 0
+    assert status["health_state"] == HealthState.GPU_BACKEND_UNAVAILABLE
+    assert "no Vulkan device" in status["health_message"]
+    assert [call[0] for call in factory.calls] == ["vulkan"]
 
 
 def test_gpu_load_without_device_is_rejected(factory: EngineFactory) -> None:
     factory.kwargs["gpu_present"] = False
-    manager = loaded_manager(make_config(), factory)
-    assert manager.status()["backend"] == "cpu"
-    assert manager.status()["fallback_reason"]
+    manager = ModelManager(make_config(), engine_factory=factory)
+    with pytest.raises(ModelLoadFailedError):
+        manager.load()
+    status = manager.status()
+    assert status["health_state"] == HealthState.GPU_BACKEND_UNAVAILABLE
+    assert "without a GPU device" in status["health_message"]
+    assert status["backend"] is None
 
 
 def test_vulkan_backend_identity(factory: EngineFactory) -> None:
@@ -147,12 +197,14 @@ def test_vulkan_backend_identity(factory: EngineFactory) -> None:
     assert identity["devices"] == ["fake-vulkan-0"]
 
 
-def test_cpu_backend_reports_no_acceleration(factory: EngineFactory) -> None:
-    factory.fail("vulkan")
-    manager = loaded_manager(make_config(), factory)
-    identity = manager.status()["identity"]
-    assert identity["gpu_offload"] is False
-    assert manager.status()["accelerated"] is False
+def test_cpu_backend_reports_no_acceleration_only_when_explicit(factory: EngineFactory) -> None:
+    manager = loaded_manager(make_config(backend_preference="cpu"), factory)
+    status = manager.status()
+    assert [call[0] for call in factory.calls] == ["cpu"]
+    assert status["backend"] == "cpu"
+    assert status["health_state"] == HealthState.READY
+    assert status["identity"]["gpu_offload"] is False
+    assert status["accelerated"] is False
 
 
 # ---------------------------------------------------------------------- budget
@@ -176,23 +228,53 @@ def test_budget_failure_unloads_and_reports(factory: EngineFactory) -> None:
     with pytest.raises(ModelLoadFailedError) as excinfo:
         manager.load()
     attempts = excinfo.value.details["attempts"]
-    assert {item["backend"] for item in attempts} == {"vulkan", "cpu"}
+    assert {item["backend"] for item in attempts} == {"vulkan"}
     assert manager.state == "error"
+    assert manager.status()["health_state"] == HealthState.GPU_MEMORY_INSUFFICIENT
     assert all(engine.unload_calls >= 1 for engine in factory.instances)
 
 
-def test_kv_cache_overflow_falls_back_to_cpu_with_reason(factory: EngineFactory) -> None:
-    # GPU budget alone is too small for the KV cache; the CPU build still works (RAM budget),
-    # so KIE stays usable and reports why it is not accelerated.
+def test_kv_cache_overflow_fails_without_cpu_fallback(factory: EngineFactory) -> None:
     config = make_config(vram_budget_mb=1000)
     factory.kwargs["kv_mb"] = 1200.0
     manager = ModelManager(config, engine_factory=factory)
-    manager.load()
+    with pytest.raises(ModelLoadFailedError):
+        manager.load()
     status = manager.status()
-    assert status["backend"] == "cpu"
-    assert "KV" in (status["fallback_reason"] or "")
-    assert len(factory.instances) == 2
+    assert status["health_state"] == HealthState.GPU_MEMORY_INSUFFICIENT
+    assert "KV cache" in status["health_message"]
+    assert len(factory.instances) == 1
     assert factory.instances[0].unload_calls >= 1
+
+
+def test_inference_smoke_failure_blocks_ready(factory: EngineFactory) -> None:
+    factory.kwargs["fail_on_generate"] = True
+    manager = ModelManager(make_config(), engine_factory=factory)
+    with pytest.raises(ModelLoadFailedError):
+        manager.load()
+    status = manager.status()
+    assert status["health_state"] == HealthState.INFERENCE_FAILED
+    assert status["ready"] is False
+    assert "smoke test" in status["health_message"]
+    assert factory.instances[0].unload_calls >= 1
+
+
+def test_missing_model_reports_model_not_found() -> None:
+    def missing(_backend: str, _config: KieConfig, _layers: int):
+        raise RuntimeError("model not found at hidden\\Qwen3-4B.gguf")
+
+    manager = ModelManager(make_config(), engine_factory=missing)
+    with pytest.raises(ModelLoadFailedError):
+        manager.load()
+    assert manager.status()["health_state"] == HealthState.MODEL_NOT_FOUND
+
+
+def test_corrupt_model_reports_load_failed(factory: EngineFactory) -> None:
+    factory.fail("vulkan", "llama_model_load_from_file returned NULL")
+    manager = ModelManager(make_config(), engine_factory=factory)
+    with pytest.raises(ModelLoadFailedError):
+        manager.load()
+    assert manager.status()["health_state"] == HealthState.MODEL_LOAD_FAILED
 
 
 # ---------------------------------------------------------------- single flight
@@ -521,6 +603,26 @@ def test_stream_filter_modes() -> None:
 
 
 # ------------------------------------------------------------------ availability
+
+
+def test_application_config_autoloads_vulkan(monkeypatch) -> None:
+    monkeypatch.delenv("KBMTI_KIE_AUTOLOAD", raising=False)
+    monkeypatch.delenv("KBMTI_KIE_BACKEND", raising=False)
+    config = load_config()
+    assert config.autoload is True
+    assert config.backends == ("vulkan",)
+
+
+def test_explicit_ensure_loading_starts_qwen_without_app_autoload(tmp_path: Path) -> None:
+    factory = EngineFactory()
+    service = service_for(tmp_path, make_config(autoload=False), factory)
+    service.ensure_loading()
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline and not service.ready:
+        time.sleep(0.02)
+    assert service.ready is True
+    assert service.health_state == "READY"
+    service.shutdown()
 
 
 def test_autoload_failure_is_recorded_not_raised(tmp_path: Path) -> None:

@@ -73,6 +73,7 @@ class FakeEngine:
         layers: int = 99,
         *,
         fail_on_load: bool = False,
+        fail_on_generate: bool = False,
         gpu_present: bool = True,
         model_mb_per_layer: float = 64.86,
         kv_mb: float = 576.0,
@@ -85,6 +86,7 @@ class FakeEngine:
         self.backend = backend
         self.layers = layers
         self.fail_on_load = fail_on_load
+        self.fail_on_generate = fail_on_generate
         self.gpu_present = gpu_present
         self.model_mb_per_layer = model_mb_per_layer
         self.kv_mb = kv_mb
@@ -160,6 +162,8 @@ class FakeEngine:
             self.entered += 1
             self.max_concurrent = max(self.max_concurrent, self.entered)
         try:
+            if self.fail_on_generate:
+                raise RuntimeError("fake inference failure")
             if self.gate is not None:
                 self.gate.wait(timeout=5.0)
             started = time.perf_counter()

@@ -66,6 +66,7 @@ class AnalysisService:
         )
         self._last_error: str | None = None
         self._builds = 0
+        self._last_candles: list = []
 
     @property
     def enabled(self) -> bool:
@@ -92,6 +93,7 @@ class AnalysisService:
         fetched_at = self._clock()
         try:
             batch = self._source.fetch(scope.symbol, scope.timeframe, MAX_ANALYSIS_BARS)
+            self._last_candles = list(batch.candles)
             snapshot = self._builder.build(
                 symbol=scope.symbol,
                 timeframe=scope.timeframe,
@@ -120,6 +122,10 @@ class AnalysisService:
         refresh: bool = False,
     ) -> MarketContextResponse:
         return context_from_snapshot(self.snapshot(symbol=symbol, timeframe=timeframe, refresh=refresh))
+
+    def recent_candles(self, limit: int = 6) -> list:
+        """Return the most recent validated OHLCV bars already used by the snapshot."""
+        return list(self._last_candles[-max(1, int(limit)) :])
 
     def status(self) -> dict[str, object]:
         return {

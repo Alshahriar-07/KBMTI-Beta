@@ -39,8 +39,10 @@ class QwenOutput(StrictModel):
 
 class QwenStatus(StrEnum):
     USED = "USED"
+    INITIALIZING = "INITIALIZING"
     UNAVAILABLE = "UNAVAILABLE"
     INVALID = "INVALID"
+    TIMEOUT = "TIMEOUT"
     DISABLED = "DISABLED"
 
 

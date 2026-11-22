@@ -27,7 +27,9 @@ DEFAULT_RAM_BUDGET_MB = 11_000
 # driver bookkeeping are not released. The budget must carry that for the whole session.
 DEFAULT_VULKAN_RESIDUAL_MB = 376.0
 
-BACKEND_ORDER = ("vulkan", "cpu")
+# GPU-first by default. The CPU runtime is opt-in only (``KBMTI_KIE_BACKEND=cpu``):
+# silently answering on CPU after a Vulkan failure would misrepresent acceleration.
+BACKEND_ORDER = ("vulkan",)
 
 
 def _env_str(name: str, default: str) -> str:
@@ -67,7 +69,10 @@ class KieConfig:
     """Resolved KIE settings (immutable; build once per process)."""
 
     enabled: bool = True
-    autoload: bool = False
+    # Qwen is warmed in the background on normal application startup. Set
+    # KBMTI_KIE_AUTOLOAD=false to skip eager startup; the assistant still
+    # initializes it when Qwen is first requested.
+    autoload: bool = True
     backend_preference: str = "auto"  # "auto" | "vulkan" | "cpu"
     models_root: Path = field(default_factory=lambda: MODELS_ROOT)
     n_ctx: int = DEFAULT_N_CTX
@@ -94,9 +99,9 @@ class KieConfig:
         if preference == "cpu":
             return ("cpu",)
         if preference == "vulkan":
-            # Still allow the CPU build as a last resort: KIE must not become unusable
-            # because the GPU driver failed, but the identity always reports the truth.
-            return ("vulkan", "cpu")
+            return ("vulkan",)
+        # An unknown preference must not silently widen to CPU. GPU-first remains the
+        # default; a CPU run requires the explicit ``cpu`` preference above.
         return BACKEND_ORDER
 
     def effective_max_tokens(self, requested: int | None) -> int:
@@ -132,7 +137,10 @@ def load_config() -> KieConfig:
 
     return KieConfig(
         enabled=_env_bool("KBMTI_KIE_ENABLED", True),
-        autoload=_env_bool("KBMTI_KIE_AUTOLOAD", False),
+        # The application starts Qwen in the background by default. Without this, a
+        # normal launch never calls /kie/load and the assistant reports UNAVAILABLE even
+        # though the model and Vulkan runtime are installed.
+        autoload=_env_bool("KBMTI_KIE_AUTOLOAD", True),
         backend_preference=_env_str("KBMTI_KIE_BACKEND", "auto").lower(),
         models_root=Path(_env_str("KBMTI_KIE_MODELS_ROOT", str(MODELS_ROOT))),
         n_ctx=max(1024, _env_int("KBMTI_KIE_CTX", DEFAULT_N_CTX)),

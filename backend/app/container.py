@@ -275,6 +275,7 @@ def build_container(
                 strategies=strategies,
                 planning=trade_planning,
                 kie=kie_service,
+                forecast=forecast,
             )
         except Exception:  # pragma: no cover - optional narration layer
             logger.exception("Intelligence layer failed to initialize; continuing without it")

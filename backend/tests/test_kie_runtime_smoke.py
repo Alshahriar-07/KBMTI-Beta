@@ -50,15 +50,14 @@ def test_real_model_loads_generates_and_unloads(tmp_path: Path) -> None:
         loaded = service.load()
         assert loaded["memory"]["measured_mb"] > 0
         status = service.status()
-        assert status["backend"] in {"vulkan", "cpu"}
+        assert status["backend"] == "vulkan"
         assert status["state"] == "ready"
-        if status["backend"] == "vulkan":
-            assert status["accelerated"] is True
-            assert status["memory"]["offloaded_layers"] > 0
-            assert status["identity"]["devices"], "Vulkan identity must name the device"
-        else:  # pragma: no cover - only on a machine where the GPU path failed
-            assert status["accelerated"] is False
-            assert status["fallback_reason"]
+        assert status["health_state"] == "READY"
+        assert status["accelerated"] is True
+        assert status["memory"]["offloaded_layers"] > 0
+        assert status["identity"]["devices"], "Vulkan identity must name the device"
+        assert status["gpu_name"], "health must name the detected GPU"
+        assert status["smoke_test"]["generated_tokens"] > 0
 
         result = service.chat(
             parse_run_request(

@@ -300,6 +300,13 @@ class LlamaApi:
         ggml.ggml_backend_dev_count.restype = c_size_t
         ggml.ggml_backend_dev_by_type.argtypes = [c_int32]
         ggml.ggml_backend_dev_by_type.restype = c_void_p
+        # Device names are available from this tag's backend API, so diagnostics do not
+        # rely on the one-time Vulkan discovery log line being emitted again on reload.
+        for name in ("ggml_backend_dev_name", "ggml_backend_dev_description"):
+            fn = getattr(ggml, name, None)
+            if fn is not None:
+                fn.argtypes = [c_void_p]
+                fn.restype = c_char_p
         self._backends_loaded = False
 
     def load_backends(self, search_path: Path | None = None) -> dict[str, object]:
@@ -307,17 +314,30 @@ class LlamaApi:
         path = str((search_path or self.dll_dir).resolve())
         status = self.ggml.ggml_backend_load_all_from_path(path.encode())
         self._backends_loaded = status == 0
-        gpu_device = bool(self.ggml.ggml_backend_dev_by_type(1))
+        gpu_device = self.ggml.ggml_backend_dev_by_type(1)
+        gpu_name = self._device_text("ggml_backend_dev_name", gpu_device)
+        gpu_description = self._device_text("ggml_backend_dev_description", gpu_device)
         return {
             "status": status,
             "search_path": path,
             "device_count": int(self.ggml.ggml_backend_dev_count()),
             # ``llama_supports_gpu_offload()`` is not trustworthy here: the RPC backend
             # registers itself as a GPU device, so a CPU-only plugin set reports True.
-            "gpu_offload": gpu_device,
-            "gpu_device_present": gpu_device,
+            "gpu_offload": bool(gpu_device),
+            "gpu_device_present": bool(gpu_device),
+            "gpu_name": gpu_name,
+            "gpu_description": gpu_description,
             "llama_supports_gpu_offload": bool(self.lib.llama_supports_gpu_offload()),
         }
+
+    def _device_text(self, function: str, device: int | None) -> str | None:
+        if not device:
+            return None
+        fn = getattr(self.ggml, function, None)
+        if fn is None:
+            return None
+        raw = fn(device)
+        return raw.decode("utf-8", "replace") if raw else None
 
     @property
     def backends_loaded(self) -> bool:

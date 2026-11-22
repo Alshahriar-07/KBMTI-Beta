@@ -12,12 +12,11 @@ from app.core.errors import ApiError
 torch = pytest.importorskip("torch")
 pytest.importorskip("patron")
 
+from app.patron.service import PatronInferenceService  # noqa: E402
 from patron.config import load_config  # noqa: E402
 from patron.features.scaler import RobustFeatureScaler  # noqa: E402
 from patron.features.schema import FEATURE_ORDER  # noqa: E402
 from patron.models.patron_net import build_model, count_parameters  # noqa: E402
-
-from app.patron.service import PatronInferenceService  # noqa: E402
 
 PATRON_CONFIG = Path(__file__).resolve().parents[2] / "PATRON" / "configs" / "model_config.yaml"
 

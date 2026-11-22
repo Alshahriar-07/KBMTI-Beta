@@ -6,14 +6,27 @@ import {
   LineSeries,
   LineStyle,
   createChart,
+  createSeriesMarkers,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
+  type ISeriesPrimitive,
+  type IPrimitivePaneView,
   type MouseEventParams,
+  type SeriesMarker,
+  type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
+import type { CanvasRenderingTarget2D } from "fancy-canvas";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Theme } from "@/lib/theme";
+import type {
+  OverlayBand,
+  OverlayTone,
+  TradeChartOverlay,
+} from "@/lib/trade-visual";
 import type { Candle, ChartSettings, Indicators } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/state/theme-context";
@@ -30,6 +43,7 @@ interface PriceChartProps {
   height?: number | string;
   className?: string;
   fitVersion?: number;
+  overlay?: TradeChartOverlay | null;
 }
 
 interface HoverCandle {
@@ -62,6 +76,98 @@ interface ChartPalette {
   downVolume: string;
   upHistogram: string;
   downHistogram: string;
+}
+
+const OVERLAY_COLORS: Record<Theme, Record<OverlayTone, string>> = {
+  dark: {
+    entry: "rgba(77,154,255,0.95)",
+    risk: "rgba(228,107,112,0.9)",
+    target: "rgba(53,183,121,0.95)",
+    confirmation: "rgba(216,168,93,0.9)",
+    support: "rgba(53,183,121,0.72)",
+    resistance: "rgba(228,107,112,0.72)",
+    liquidity: "rgba(216,168,93,0.72)",
+    forecast: "rgba(77,154,255,0.8)",
+    scenario: "rgba(176,186,197,0.72)",
+  },
+  light: {
+    entry: "rgba(47,111,219,0.95)",
+    risk: "rgba(214,69,80,0.9)",
+    target: "rgba(22,134,83,0.95)",
+    confirmation: "rgba(169,107,23,0.9)",
+    support: "rgba(22,134,83,0.72)",
+    resistance: "rgba(214,69,80,0.72)",
+    liquidity: "rgba(169,107,23,0.72)",
+    forecast: "rgba(47,111,219,0.8)",
+    scenario: "rgba(89,99,111,0.72)",
+  },
+};
+
+const BAND_FILL: Record<OverlayBand["tone"], string> = {
+  entry: "rgba(77,154,255,0.10)",
+  risk: "rgba(228,107,112,0.10)",
+  reward: "rgba(53,183,121,0.07)",
+  forecast: "rgba(77,154,255,0.06)",
+};
+
+const BAND_BORDER: Record<OverlayBand["tone"], string> = {
+  entry: "rgba(77,154,255,0.55)",
+  risk: "rgba(228,107,112,0.55)",
+  reward: "rgba(53,183,121,0.45)",
+  forecast: "rgba(77,154,255,0.4)",
+};
+
+/**
+ * Draws full-width translucent bands behind the candles. The primitive uses the
+ * series' own price scale, so the zones remain aligned while zooming, panning and
+ * resizing; no pixel positions are cached from a previous viewport.
+ */
+class BandPrimitive implements ISeriesPrimitive<Time> {
+  private readonly series: ISeriesApi<"Candlestick">;
+  private readonly bands: OverlayBand[];
+
+  constructor(series: ISeriesApi<"Candlestick">, bands: OverlayBand[]) {
+    this.series = series;
+    this.bands = bands;
+  }
+
+  private readonly view: IPrimitivePaneView = {
+    zOrder: () => "bottom",
+    renderer: () => ({
+      draw: (target: CanvasRenderingTarget2D) => {
+        if (!this.bands.length) return;
+        target.useMediaCoordinateSpace((scope) => {
+          const context = scope.context;
+          for (const band of this.bands) {
+            const top = this.series.priceToCoordinate(Math.max(band.lower, band.upper));
+            const bottom = this.series.priceToCoordinate(Math.min(band.lower, band.upper));
+            if (top === null || bottom === null || bottom <= top) continue;
+            context.fillStyle = BAND_FILL[band.tone];
+            context.fillRect(0, top, scope.mediaSize.width, bottom - top);
+            context.strokeStyle = BAND_BORDER[band.tone];
+            context.lineWidth = 1;
+            context.setLineDash([3, 3]);
+            context.beginPath();
+            context.moveTo(0, top);
+            context.lineTo(scope.mediaSize.width, top);
+            context.moveTo(0, bottom);
+            context.lineTo(scope.mediaSize.width, bottom);
+            context.stroke();
+            context.setLineDash([]);
+            if (bottom - top > 16) {
+              context.fillStyle = "rgba(180,190,200,0.72)";
+              context.font = '9px "Inter", "Segoe UI", system-ui, sans-serif';
+              context.fillText(band.label, 7, top + 11);
+            }
+          }
+        });
+      },
+    }),
+  };
+
+  paneViews(): readonly IPrimitivePaneView[] {
+    return [this.view];
+  }
 }
 
 const CHART_PALETTES: Record<Theme, ChartPalette> = {
@@ -137,6 +243,7 @@ export function PriceChart({
   height = "100%",
   className,
   fitVersion = 0,
+  overlay = null,
 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -148,6 +255,11 @@ export function PriceChart({
   const macdRef = useRef<ISeriesApi<"Line"> | null>(null);
   const macdSignalRef = useRef<ISeriesApi<"Line"> | null>(null);
   const macdHistRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const overlayLinesRef = useRef<IPriceLine[]>([]);
+  const overlayMarkersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const overlayPathsRef = useRef<Array<ISeriesApi<"Line">>>([]);
+  const overlayPredictedRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const overlayBandRef = useRef<BandPrimitive | null>(null);
   const previousKeyRef = useRef<string>("");
   const chartRenderRef = useRef<{
     length: number;
@@ -428,6 +540,12 @@ export function PriceChart({
 
     return () => {
       chart.unsubscribeCrosshairMove(onCrosshair);
+      overlayMarkersRef.current?.detach();
+      overlayMarkersRef.current = null;
+      overlayLinesRef.current = [];
+      overlayPathsRef.current = [];
+      overlayPredictedRef.current = null;
+      overlayBandRef.current = null;
       chart.remove();
       chartRef.current = null;
       candleRef.current = null;
@@ -542,6 +660,128 @@ export function PriceChart({
     if (fitVersion === 0) return;
     chartRef.current?.timeScale().fitContent();
   }, [fitVersion]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = candleRef.current;
+    if (!chart || !series) return;
+
+    for (const line of overlayLinesRef.current) series.removePriceLine(line);
+    overlayLinesRef.current = [];
+    overlayMarkersRef.current?.detach();
+    overlayMarkersRef.current = null;
+    for (const pathSeries of overlayPathsRef.current) chart.removeSeries(pathSeries);
+    overlayPathsRef.current = [];
+    if (overlayPredictedRef.current) {
+      chart.removeSeries(overlayPredictedRef.current);
+      overlayPredictedRef.current = null;
+    }
+    if (overlayBandRef.current) {
+      series.detachPrimitive(overlayBandRef.current);
+      overlayBandRef.current = null;
+    }
+    if (!overlay) return;
+
+    const colors = OVERLAY_COLORS[theme];
+    overlayLinesRef.current = overlay.lines.map((line) =>
+      series.createPriceLine({
+        price: line.price,
+        color: colors[line.tone],
+        lineWidth: 1,
+        lineStyle: line.dashed ? LineStyle.Dashed : LineStyle.Solid,
+        axisLabelVisible: true,
+        title: line.label,
+      }),
+    );
+
+    if (overlay.bands.length) {
+      const primitive = new BandPrimitive(series, overlay.bands);
+      series.attachPrimitive(primitive);
+      overlayBandRef.current = primitive;
+    }
+
+    if (overlay.markers.length) {
+      const markers: SeriesMarker<Time>[] = overlay.markers.map((marker) => ({
+        time: marker.time as UTCTimestamp,
+        position:
+          marker.direction === "BULLISH"
+            ? "belowBar"
+            : marker.direction === "BEARISH"
+              ? "aboveBar"
+              : "inBar",
+        color:
+          marker.direction === "BULLISH"
+            ? COLORS.bull
+            : marker.direction === "BEARISH"
+              ? COLORS.bear
+              : COLORS.text,
+        shape:
+          marker.direction === "BULLISH"
+            ? "arrowUp"
+            : marker.direction === "BEARISH"
+              ? "arrowDown"
+              : "circle",
+        text: marker.label,
+        size: 1,
+      }));
+      overlayMarkersRef.current = createSeriesMarkers(series, markers);
+    }
+
+    if (overlay.predictedCandles.length) {
+      const predicted = chart.addSeries(CandlestickSeries, {
+        upColor: COLORS.upVolume,
+        downColor: COLORS.downVolume,
+        wickUpColor: COLORS.upVolume,
+        wickDownColor: COLORS.downVolume,
+        borderVisible: false,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        priceFormat: { type: "price", precision: digits, minMove: 10 ** -digits },
+      });
+      predicted.setData(
+        overlay.predictedCandles.map((candle) => ({
+          time: candle.time as UTCTimestamp,
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+        })),
+      );
+      overlayPredictedRef.current = predicted;
+    }
+
+    overlayPathsRef.current = overlay.paths.map((path) => {
+      const pathSeries = chart.addSeries(LineSeries, {
+        color: colors[path.tone],
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: true,
+        crosshairMarkerRadius: 3,
+        title: path.label,
+        priceFormat: { type: "price", precision: digits, minMove: 10 ** -digits },
+      });
+      pathSeries.setData(
+        path.points.map((point) => ({
+          time: point.time as UTCTimestamp,
+          value: point.price,
+        })),
+      );
+      return pathSeries;
+    });
+  }, [
+    overlay,
+    theme,
+    digits,
+    COLORS,
+    chartOptions.crosshair,
+    chartOptions.show_bollinger,
+    chartOptions.show_ema,
+    chartOptions.show_macd,
+    chartOptions.show_rsi,
+    chartOptions.show_volume,
+  ]);
 
   return (
     <div className={cn("relative h-full min-h-0 w-full", className)}>

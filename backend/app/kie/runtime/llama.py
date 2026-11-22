@@ -232,12 +232,18 @@ class LlamaRuntime:
             return {}
         lines = [line for _lvl, line in self.log.snapshot()]
         devices = [line for line in lines if "ggml_vulkan: " in line and "=" in line]
+        gpu_name = self._backend_report.get("gpu_name")
+        if not devices and gpu_name:
+            # Vulkan discovery is process-global and may not log again after a reload;
+            # the backend device name is still authoritative.
+            devices = [f"ggml_vulkan: 0 = {gpu_name}"]
         offload = [line for line in lines if "offload" in line.lower() or "buffer size" in line.lower()]
         return {
             "runtime_tag": self._api.describe_abi().get("runtime_tag"),
             "llama_version": self._api.version(),
             "supports_gpu_offload": bool(self._backend_report.get("gpu_device_present")),
             "backend_load": dict(self._backend_report),
+            "gpu_name": str(gpu_name) if gpu_name else None,
             "vulkan_devices": devices,
             "offload_lines": offload,
         }

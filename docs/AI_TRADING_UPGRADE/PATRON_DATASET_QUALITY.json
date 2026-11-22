@@ -1,0 +1,174 @@
+{
+  "dataset_version": "btcusdt-15m-v1.0.0",
+  "generated_at": "2026-11-22T14:58:27+00:00",
+  "raw_path": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\backend\\data\\patron\\BTCUSDT_15m.parquet",
+  "raw_sha256": "5eb3289b32b5980d47f5af20be99484e16d9be8aa32b5f4bec12c965aa22458b",
+  "dataset_path": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\PATRON\\data\\features\\BTCUSDT_dataset.parquet",
+  "dataset_sha256": "6af006c437384cd06b6012a32b2ae15f6307b956fa66900fce6ad3d19e8dc541",
+  "raw": {
+    "rows": 100930,
+    "start": "2024-01-01T00:00:00+00:00",
+    "end": "2026-11-17T08:15:00+00:00",
+    "timezone_aware": true,
+    "chronological": true,
+    "duplicate_timestamps": 0,
+    "non_15m_steps": 0,
+    "gap_count": 0,
+    "invalid_ohlc_rows": 0,
+    "negative_volume_rows": 0,
+    "null_cells": 0,
+    "abnormal_volume_rows": 430,
+    "abnormal_volume_note": "volume > median + 25*MAD; flagged, never silently removed",
+    "close_offset_seconds": 899.999
+  },
+  "target_alignment": {
+    "rows_equal": true,
+    "timestamps_equal": true,
+    "targets": {
+      "tgt_close_1": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_close_2": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_close_3": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_close_4": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_close_5": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_close_6": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_high_1": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_high_2": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_high_3": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_high_4": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_high_5": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_high_6": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_low_1": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_low_2": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_low_3": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_low_4": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_low_5": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      },
+      "tgt_low_6": {
+        "available": true,
+        "max_abs_diff": 0.0,
+        "matches": true
+      }
+    },
+    "all_targets_match": true
+  },
+  "causal_feature_check": {
+    "checks": [
+      {
+        "cutoff_row": 5000,
+        "max_abs_diff": 0.0,
+        "causal": true
+      },
+      {
+        "cutoff_row": 50000,
+        "max_abs_diff": 0.0,
+        "causal": true
+      },
+      {
+        "cutoff_row": 90000,
+        "max_abs_diff": 0.0,
+        "causal": true
+      }
+    ],
+    "passed": true,
+    "note": "Features at bar k are identical when all candles after k are deleted."
+  },
+  "split": {
+    "method": "walk_forward",
+    "purge_bars": 6,
+    "embargo_bars": 6,
+    "train": {
+      "windows": 70417,
+      "first_bar": "2024-01-04T07:45:00+00:00",
+      "last_bar": "2026-01-06T19:45:00+00:00",
+      "first_index": 319,
+      "last_index": 70735
+    },
+    "validation": {
+      "windows": 15079,
+      "first_bar": "2026-01-06T23:00:00+00:00",
+      "last_bar": "2026-06-13T00:30:00+00:00",
+      "first_index": 70748,
+      "last_index": 85826
+    },
+    "test": {
+      "windows": 15085,
+      "first_bar": "2026-06-13T03:45:00+00:00",
+      "last_bar": "2026-11-17T06:45:00+00:00",
+      "first_index": 85839,
+      "last_index": 100923
+    }
+  },
+  "conclusion": {
+    "raw_data_usable": true,
+    "targets_aligned": true,
+    "features_causal": true,
+    "abnormal_volume_policy": "flagged only; authentic market spikes are retained"
+  }
+}

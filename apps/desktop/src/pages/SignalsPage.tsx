@@ -9,9 +9,8 @@ import { GroupLabel, Panel } from "@/components/ui/Panel";
 import { Spinner } from "@/components/ui/Spinner";
 import { usePolling } from "@/hooks/usePolling";
 import { api } from "@/lib/api";
-import { newestForecast } from "@/lib/forecast";
 import { formatBrokerTime, formatNumber, formatPrice } from "@/lib/format";
-import type { ForecastRun, Signal, SignalFactor } from "@/lib/types";
+import type { Signal, SignalFactor } from "@/lib/types";
 import { useMarket } from "@/state/market-context";
 import { cn } from "@/lib/utils";
 
@@ -81,17 +80,11 @@ export function SignalsPage() {
     () => api.signal(),
     15_000,
   );
-  const patronForecast = usePolling<ForecastRun | null>(
-    "signals-patron-forecast",
-    () => api.forecastLatest(),
-    20_000,
-  );
   const history = usePolling<{ events: SignalEvent[]; count: number }>(
     "signal-history",
     () => api.signalHistory(40) as Promise<{ events: SignalEvent[]; count: number }>,
     20_000,
   );
-  const modelForecast = newestForecast(stream.latestForecast, patronForecast.data);
 
   const data = signal.data;
   const metrics = data?.metrics ?? {};
@@ -100,9 +93,10 @@ export function SignalsPage() {
   return (
     <div className="scroll-area h-full">
       <AiNotice>
-        The BUY/SELL split uses PATRON's 90-minute close quantiles from the latest stored
-        forecast, falling back to its five-class momentum output and then the technical rule
-        score. It is a directional model reading, not a calibrated trade probability.
+        The BUY/SELL split on this page is the deterministic technical-rule reading, not a
+        PATRON forecast and not the unified AI decision. It is directional context, not a
+        calibrated trade probability. The validated PATRON assessment and Qwen interpretation
+        live on the Overview workspace.
       </AiNotice>
 
       <div className="grid border-b border-line bg-surface xl:grid-cols-[minmax(0,1fr)_304px] xl:divide-x xl:divide-line">
@@ -113,15 +107,15 @@ export function SignalsPage() {
               {symbol || "no symbol"} · {timeframe}
             </span>
             <span className="ml-auto flex items-center gap-2">
-              {(signal.loading || patronForecast.loading) && <Spinner />}
-              <Badge tone="info">Directional model</Badge>
+              {signal.loading && <Spinner />}
+              <Badge tone="info">Deterministic rule</Badge>
             </span>
           </header>
 
-          {data || modelForecast ? (
+          {data ? (
             <>
               <div className="border-b border-line-soft px-3 py-3">
-                <SignalDistribution signal={data} forecast={modelForecast} />
+                <SignalDistribution signal={data} forecast={null} />
               </div>
 
               {data && (
@@ -175,10 +169,9 @@ export function SignalsPage() {
           ) : (
             <EmptyState
               icon={BrainCircuit}
-              title={signal.loading || patronForecast.loading ? "Reading indicators" : "No signal available"}
+              title={signal.loading ? "Reading indicators" : "No signal available"}
               description={
                 signal.error ??
-                patronForecast.error ??
                 "Connect a market feed and let 50 completed candles accumulate before a directional signal is evaluated."
               }
             />

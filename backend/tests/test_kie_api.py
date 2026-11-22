@@ -27,6 +27,8 @@ from tests.kie_fakes import EngineFactory
 def make_service(tmp_path: Path, factory: EngineFactory, **config) -> KieService:
     db = Database(tmp_path / "kie-api.db")
     db.initialize()
+    # API tests drive load explicitly; production autoload is covered separately.
+    config.setdefault("autoload", False)
     return KieService(config=KieConfig(**config), db=db, engine_factory=factory)
 
 
@@ -56,7 +58,10 @@ def test_status_reports_disabled_and_enabled_features(api) -> None:
     client, _service, _factory = api
     body = client.get("/api/v1/kie/status").json()
     assert body["state"] == "unloaded"
+    assert body["health_state"] == "NOT_INITIALIZED"
     assert body["ready"] is False
+    assert body["available"] is False
+    assert body["artifacts"]["model_present"] is True
     assert body["modes"]["default"] == "fast"
     assert body["modes"]["available"] == ["fast", "reasoning"]
     assert body["modes"]["thinking_default"] is False
@@ -102,6 +107,10 @@ def test_load_chat_and_run_history(api) -> None:
     assert payload["backend"] == "vulkan"
     assert payload["memory"]["offloaded_layers"] == 37
     assert payload["status"]["state"] == "ready"
+    assert payload["status"]["health_state"] == "READY"
+    assert payload["status"]["available"] is True
+    assert payload["status"]["gpu_name"] == "fake-vulkan-0"
+    assert payload["status"]["smoke_test"]["generated_tokens"] > 0
 
     response = client.post(
         "/api/v1/kie/chat",
@@ -153,6 +162,7 @@ def test_unload_frees_the_model(api) -> None:
     assert response.json()["state"] == "unloaded"
     assert factory.instances[0].unload_calls >= 1
     assert client.post("/api/v1/kie/chat", json={"message": "hi"}).status_code == 503
+    assert client.get("/api/v1/kie/status").json()["health_state"] == "NOT_INITIALIZED"
 
 
 def test_disabled_kie_rejects_work(tmp_path: Path, terminal_exe: Path) -> None:

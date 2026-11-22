@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { ApiError } from "@/lib/api";
 import { DEFAULT_CHART } from "@/lib/defaults";
 import { formatBrokerTime } from "@/lib/format";
+import type { TradeChartOverlay } from "@/lib/trade-visual";
 import type { Candle, CandleSeries, ChartSettings, Indicators } from "@/lib/types";
 import { useLiveCandle } from "@/state/live-candles";
 import { useMarket } from "@/state/market-context";
@@ -103,6 +104,7 @@ interface ChartWorkspaceProps {
   loading?: boolean;
   className?: string;
   showFooter?: boolean;
+  overlay?: TradeChartOverlay | null;
 }
 
 /**
@@ -115,6 +117,7 @@ export function ChartWorkspace({
   loading = false,
   className,
   showFooter = true,
+  overlay = null,
 }: ChartWorkspaceProps) {
   const { stream, settings, saveSettings } = useMarket();
   const snapshot = stream.snapshot;
@@ -210,6 +213,7 @@ export function ChartWorkspace({
           timeframe={timeframe}
           source={stream.status?.provider ?? candles?.source ?? "market"}
           fitVersion={fitVersion}
+          overlay={overlay}
         />
       </div>
 

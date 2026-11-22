@@ -173,6 +173,7 @@ class PatronInferenceService:
         started = time.perf_counter()
         try:
             import torch
+
             from patron.inference.pipeline import load_predictor
             from patron.models.patron_net import count_parameters
 
