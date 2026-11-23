@@ -2,7 +2,7 @@
 
 <img src="assets/icon.png" width="120" />
 
-# KBMTI Engineering
+# KBMTI ENGINEERING
 
 ### AI-Powered Trading Intelligence & Automation
 
