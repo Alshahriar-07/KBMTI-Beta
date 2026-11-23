@@ -196,6 +196,9 @@ def backend_environment(config: LaunchConfig) -> dict[str, str]:
     env["KBMTI_HOST"] = config.host
     env["KBMTI_PORT"] = str(config.backend_port)
     env["PYTHONUNBUFFERED"] = "1"
+    # The renewal capability stays in the launcher process. The backend only
+    # receives its own one-time ticket.
+    env.pop("KBMTI_RENEWAL_TOKEN", None)
     if config.data_dir:
         env["KBMTI_DATA_DIR"] = str(config.data_dir)
     env.update(config.extra_env)

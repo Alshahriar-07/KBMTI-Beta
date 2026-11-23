@@ -4,10 +4,18 @@
 
 KBMTI is a native Windows desktop application for BTC market intelligence. The React interface runs inside **PySide6 + Qt WebEngine**, backed by a local FastAPI service, live public Binance data, the **PATRON** numerical forecasting model, and an embedded **Qwen3-4B** interpretation layer. Deterministic analysis and risk remain authoritative; Qwen explains and assesses, it never changes PATRON's prices or issues an order.
 
-The only development command is:
+The official user-facing entry point is:
+
+```text
+KBMTI-RAW-TEST.exe
+```
+
+It runs the `x.bat` authentication UI, verifies the access key with the KBMTI license service, and only then starts the desktop runtime. `python -m kbmti` redirects to the official EXE and never initializes the application directly.
+
+For licensed development, the authenticated gateway is:
 
 ```bash
-python -m kbmti
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER
 ```
 
 No browser tab, no manual `npm run dev`, no hosted frontend. PATRON is probabilistic source evidence, Qwen is the AI interpretation layer, and Binance is the live market-data provider. There is no trading, order execution or financial advice.
@@ -15,8 +23,9 @@ No browser tab, no manual `npm run dev`, no hosted frontend. PATRON is probabili
 ## Desktop architecture
 
 ```
-python -m kbmti
-  └── kbmti launcher (PySide6)
+KBMTI-RAW-TEST.exe
+  └── x.bat authentication + signed-ticket gateway
+      └── kbmti runtime (PySide6)
       ├── validates Python/Node/npm/backend dependencies
       ├── chooses free loopback ports
       ├── starts FastAPI backend (uvicorn) in its own process
@@ -36,10 +45,10 @@ Development and production frontend loading are separate:
 
 | Mode | Frontend | Command |
 | --- | --- | --- |
-| Development (default) | Vite dev server with HMR | `python -m kbmti` |
-| Production preview | Existing `apps/desktop/dist` via Vite preview | `python -m kbmti --mode production` |
+| Development (default) | Vite dev server with HMR | `KBMTI-RAW-TEST.exe` |
+| Production preview | Existing `apps/desktop/dist` via Vite preview | `KBMTI-RAW-TEST.exe`, then licensed runtime `--mode production` |
 
-A packaged EXE/installer is intentionally not generated in this phase. The launcher keeps paths and process orchestration isolated in `kbmti/` so PyInstaller can bundle it later.
+The official `KBMTI-RAW-TEST.exe` is built from `launcher/KBMTILauncher.cs` plus the `x.bat` source and an integrity hash. It does not bundle the Python backend; the adjacent `backend/` directory and virtual environment are still required. See [`KBMTI-RAW-TEST.md`](KBMTI-RAW-TEST.md) and [`docs/AUTHENTICATION_AND_LICENSING.md`](docs/AUTHENTICATION_AND_LICENSING.md).
 
 ## Requirements
 
@@ -69,35 +78,30 @@ Optional configuration: copy `.env.example` to `.env`. Existing `.env` files are
 
 ## Start
 
-From the repository root, with the backend virtual environment active (or by calling its interpreter directly):
+Configure the license service in `.env`, start the license service, then launch:
+
+```text
+KBMTI-RAW-TEST.exe
+```
+
+The native window opens only after the access key is verified. Startup shows a KBMTI loading surface while the backend, PATRON and frontend become ready. A startup failure shows the real error and log tail, with Retry, Open logs and Quit actions. No browser window is opened.
+
+For licensed development, bypass the EXE only through the authenticated gateway:
 
 ```bash
-backend/.venv/Scripts/python.exe -m kbmti
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --headless
 ```
 
-Windows activation alternative:
-
-```powershell
-.\backend\.venv\Scripts\Activate.ps1
-python -m kbmti
-```
-
-The native window opens automatically. Startup shows a KBMTI loading surface while the backend, PATRON and frontend become ready. A startup failure shows the real error and log tail, with Retry, Open logs and Quit actions. No browser window is opened.
-
-Useful options:
+Useful runtime options are passed after the gateway:
 
 ```bash
-python -m kbmti --help
-python -m kbmti --version
-python -m kbmti --devtools                 # F12 Chromium DevTools
-python -m kbmti --backend-port 8756        # pin a port; conflicts fail clearly
-python -m kbmti --frontend-port 5173
-python -m kbmti --mode production          # requires apps/desktop/dist
-python -m kbmti --headless                 # start/probe services, then stop
-python -m kbmti --screenshot shot.png      # native-window diagnostic capture
+... -m kbmti.launch --role DEVELOPER --devtools
+... -m kbmti.launch --role DEVELOPER --backend-port 8756
+... -m kbmti.launch --role DEVELOPER --mode production
+... -m kbmti.launch --role DEVELOPER --headless
 ```
 
-The footer shows the actual backend origin chosen for the session. `python -m kbmti --headless` is the supported way to verify service orchestration without a display.
+Direct `python -m kbmti` intentionally redirects to the EXE. Direct `python -m kbmti.runtime` and `python -m app` are refused without a signed launch ticket. The footer shows the actual backend origin chosen for the session.
 
 ## Desktop lifecycle
 
@@ -208,10 +212,15 @@ The launcher still uses an existing `.env`; it only overrides host/port/data-dir
 ## Tests and verification
 
 ```bash
-# Backend + launcher
+# Backend + launcher + license enforcement
 cd backend
 PYTHONPATH=. .venv/Scripts/python.exe -m pytest
-.venv/Scripts/python.exe -m ruff check app tests scripts
+.venv/Scripts/python.exe -m ruff check app tests scripts ../kbmti ../license_server
+
+# Licensing / EXE-only checks
+cmd /c "x.bat /selftest"
+cmd /c "KBMTI-RAW-TEST.exe /selftest"
+cmd /c "backend\.venv\Scripts\python.exe -m kbmti /selftest"
 
 # Frontend
 cd apps/desktop
@@ -221,9 +230,10 @@ npm test -- --run
 npm run build
 ```
 
-Latest verification (2026-11-22):
+Latest verification (2026-11-23):
 
-- Backend: **282 passed, 1 deselected** (the opt-in real-model KIE test), 1 warning.
+- Backend: **322 passed, 2 deselected** (opt-in real-model/KIE tests), 1 warning.
+- Licensing enforcement: **17 passed**; launcher and EXE self-tests pass; licensed User/Developer/Admin headless launches reached `Workspace ready`.
 - Ruff: clean across `app`, `tests`, `scripts` and the candidate trainer.
 - Frontend: TypeScript clean, ESLint clean, **30 tests passed**, production build built in 0.76 s (651 kB bundle, existing chunk-size warning).
 - Visual Trading Assistant chart projection tests assert exact entry/SL/TP prices, risk/reward bands, scenario paths and PATRON median points.
@@ -242,8 +252,9 @@ Latest verification (2026-11-22):
 - MT5 remains an optional secondary chart feed and is not used for PATRON input. The visual assistant reports BTCUSDT M15 only; Forex is not enabled.
 - Supply/demand zone widths, breakout/retest prices and multi-timeframe alignment are not computed; the UI labels them unavailable rather than inventing levels.
 - An older default local database may lack recent `trade_plans` columns; use a fresh `KBMTI_DATA_DIR` or migrate it. Fresh databases are covered by tests.
-- No EXE/installer is produced yet. Production preview mode requires an existing frontend build.
-- Backend is loopback-only with no authentication; do not expose it publicly.
+- The EXE is built, but it is not Authenticode-signed. Production preview mode still requires an existing frontend build.
+- The local backend requires a launcher-issued signed ticket. It is still loopback-only; do not expose it publicly.
+- Source distribution means local checks can be patched. The server-side license signature is the security boundary; see [`docs/AUTHENTICATION_AND_LICENSING.md`](docs/AUTHENTICATION_AND_LICENSING.md).
 
 ## Repository layout
 

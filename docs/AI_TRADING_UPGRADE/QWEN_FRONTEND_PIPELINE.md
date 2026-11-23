@@ -37,7 +37,7 @@ Market data provider
 
 PATRON is still shown, but explicitly as **source evidence**. Qwen is the interpretation
 layer; deterministic engines remain authoritative for prices, geometry and risk. The
-strategy gate remains **PENDING (0/60)** and execution remains disabled.
+strategy gate remains **PENDING acceptance** (automated 60/60 review complete, independent human sign-off outstanding) and execution remains disabled.
 
 ## 3. Backend changes
 
@@ -198,8 +198,9 @@ analysis.
 - Qwen can still produce schema-invalid output (observed once: `next_action: "WAIT"`); the
   entire answer is rejected and the deterministic fallback is returned. The prompt now asks
   for a full instruction sentence.
-- The deterministic strategy gate remains **PENDING at 0/60 reviewed cases**. The unified
-  response does not create a validated trade, order, fill or position size.
+- The deterministic strategy gate remains **PENDING acceptance**: 60/60 automated reviews
+  are complete, independent human sign-off is outstanding. The unified response does not
+  create a validated trade, order, fill or position size.
 - PATRON still has no demonstrated directional edge (see
   [`PATRON_IMPROVEMENT_RESULTS.md`](PATRON_IMPROVEMENT_RESULTS.md)); the pipeline correctly
   flags its conflict with the deterministic bearish market rather than hiding it.

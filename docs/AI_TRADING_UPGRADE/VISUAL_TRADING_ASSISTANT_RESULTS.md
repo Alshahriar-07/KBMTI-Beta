@@ -12,7 +12,7 @@ spread model, or instrument-specific test suite yet. Crypto price arithmetic is 
 FX.
 
 Execution remains **DISABLED**, position size remains **NOT_CALCULATED**, and the Phase 2
-strategy gate remains **PENDING at 0/60 reviewed**.
+strategy gate remains **PENDING acceptance**: an automated agent reviewed 60/60, but independent human sign-off is outstanding.
 
 ## UI changes
 
@@ -216,4 +216,4 @@ no pixel snapshots are used.
 - Qwen cold inference is 32–42 s on the measured RX 580; the page uses the unified cache and a
   60 s poll, so a cold load can show a deterministic chart while AI narration is unavailable.
 - No live execution, stop movement, target change, or position sizing exists.
-- The strategy gate is still PENDING at **0/60 reviewed cases**.
+- The strategy gate is still PENDING acceptance: **60/60 reviewed by an automated agent, 0/60 independent human reviews**.

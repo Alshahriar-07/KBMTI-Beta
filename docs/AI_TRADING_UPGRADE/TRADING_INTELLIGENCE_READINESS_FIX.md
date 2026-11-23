@@ -103,7 +103,8 @@ These are represented as explicit, machine-readable blockers:
 - `risk.status` is `APPROVED` only when deterministic risk checks actually passed,
   `REJECTED` when they failed, and `NOT_EVALUATED` when no plan existed.
 - `strategy.status` maps the independent gate to `PENDING` / `PASSED` / `FAILED`; today it is
-  `PENDING` because the 60-case human review has not been completed.
+  `PENDING` because the 60-case automated review (60/60) still lacks independent human
+  sign-off and a documented aggregate acceptance threshold.
 
 A plan is never made available by bypassing strategy validation, and no size is calculated or
 invented without account inputs.
@@ -196,8 +197,10 @@ the `INITIALIZING → READY`, timeout and load-failure tests.
 
 ## 9. Remaining blockers
 
-1. **Strategy gate is PENDING.** The 60-case independent review is still incomplete. Plans, when
-   they exist, stay `PLAN_REVIEW_REQUIRED` and non-executable.
+1. **Strategy gate is PENDING.** The automated 60-case review is complete (60/60, 58 pass,
+   2 manual flags, 0 disagreements), but independent human sign-off and an aggregate
+   acceptance threshold are still missing. Plans, when they exist, stay
+   `PLAN_REVIEW_REQUIRED` and non-executable.
 2. **Position sizing is unavailable.** Verified account, contract, tick-value, leverage and fee
    inputs do not exist; no size is or should be produced.
 3. **PATRON is not predictive yet.** The candidate is a numerical-sanity fix (close MAE

@@ -212,8 +212,10 @@ repeated requests cannot fork the same plan.
 `app/trade_planning/provenance.py` maps `trend_pullback` to `PENDING` and defaults any
 unknown strategy to `PENDING`. There is no code path that promotes a strategy based on
 plan quality, backtest output, R:R or model confidence. The Phase 2 60-case gate remains
-**PENDING**: 60 cases exported, **0 independently reviewed**. Phase 3 does not change
-that count, does not author labels, and does not claim validation or profitability.
+**PENDING acceptance**: 60 cases exported, **60 reviewed by an automated coding agent**
+(58 pass, 2 manual flags, 0 disagreements), but the gate requires independent human
+sign-off. Phase 3 does not change that status, does not author human labels, and does
+not claim validation or profitability.
 
 The provenance is carried in every result and persisted plan:
 `strategy_id`, `strategy_version`, `strategy_config_version`,
@@ -301,8 +303,9 @@ sub-millisecond and are not the bottleneck.
   news or alternative data is used.
 - The plan is refreshed from the latest closed snapshot; intrabar prices never trigger
   lifecycle changes.
-- Phase 2 has **0/60** independently reviewed gate cases. Until that review is complete
-  and passes, Phase 3 remains review-gated regardless of technical plan quality.
+- Phase 2 has **60/60** automated evidence reviews but **0/60** independent human reviews.
+  Until human sign-off and aggregate acceptance are complete, Phase 3 remains review-gated
+  regardless of technical plan quality.
 
 ## 16. Files changed
 

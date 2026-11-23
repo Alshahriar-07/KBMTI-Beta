@@ -6,7 +6,9 @@ fix**, not as a validated alpha model. The previous champion is retained for rol
 **Evidence:** [`PATRON_AUDIT_REPORT.md`](PATRON_AUDIT_REPORT.md),
 [`PATRON_AUDIT_METRICS.json`](PATRON_AUDIT_METRICS.json),
 [`PATRON_CANDIDATE_METRICS.json`](PATRON_CANDIDATE_METRICS.json),
-[`PATRON_DATASET_QUALITY.json`](PATRON_DATASET_QUALITY.json).
+[`PATRON_DATASET_QUALITY.json`](PATRON_DATASET_QUALITY.json),
+[`PATRON_ROLLING_STABILITY.json`](PATRON_ROLLING_STABILITY.json),
+[`PATRON_PREDICTIVE_EDGE_RESEARCH.md`](PATRON_PREDICTIVE_EDGE_RESEARCH.md).
 
 ## 1. Original model architecture
 
@@ -192,7 +194,35 @@ backend/models/patron/best.pt
 SHA-256 bd809766fdd76fcd325f55f0092cc93b334d2d08ba6fa84c836624b3d89b26ec
 ```
 
-## 13. Reproduction
+## 13. Rolling out-of-sample stability (added 2026-11-23)
+
+A new read-only audit re-evaluates both frozen checkpoints on **every** valid test
+window (15,099, not the 2,517-sample audit above) in four chronological blocks. It
+also compares last-close persistence, previous-candle repetition and 96-bar drift.
+This is stability evidence for fixed checkpoints; it is **not** fold-wise retraining.
+
+| Fold | Period | Candidate close MAE | Champion close MAE | Persistence MAE | Candidate dir. acc. | 80% coverage |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | 2026-06-13 → 2026-07-22 | 26.34 bp | 87.15 bp | **25.76 bp** | 49.95% | 84.8% |
+| 2 | 2026-07-22 → 2026-08-30 | 21.26 bp | 93.08 bp | **20.57 bp** | 50.43% | 89.2% |
+| 3 | 2026-08-30 → 2026-10-08 | 22.57 bp | 79.05 bp | **21.91 bp** | 50.30% | 88.2% |
+| 4 | 2026-10-08 → 2026-11-17 | 24.84 bp | 85.88 bp | **24.18 bp** | 49.81% | 85.9% |
+| **All** | 2026-06-13 → 2026-11-17 | 23.75 bp | 86.29 bp | **23.11 bp** | 50.12% | 87.0% |
+
+The candidate is stable (no fold collapse, coverage 84.8–89.2%) and remains
+~63 bp better than the champion, but it is still **0.65 bp worse than persistence
+in every fold** and directional accuracy stays at 50%. Regime slices tell the same
+story: the candidate trails persistence in sideways (20.66 vs 19.97 bp), bull
+(29.38 vs 28.80 bp), bear (27.65 vs 27.06 bp), low-vol (18.75 vs 18.05 bp) and
+high-vol (35.38 vs 34.87 bp) windows.
+
+**Conclusion:** the numerical-sanity promotion stands; no new accuracy claim is
+made. The subsequent predictive-edge round did train genuine fold-wise absolute
+and residual candidates. It found **no candidate that beat persistence** and
+recorded `NO_DEMONSTRATED_EDGE`; production remained unchanged. See
+[`PATRON_PREDICTIVE_EDGE_RESEARCH.md`](PATRON_PREDICTIVE_EDGE_RESEARCH.md).
+
+## 14. Reproduction
 
 ```bash
 # 1. Validate data, alignment and causality
@@ -209,15 +239,26 @@ cd backend
 PYTHONPATH=. .venv/Scripts/python.exe scripts/patron_audit.py \
   --checkpoint ../PATRON/experiments/kbmti_patron_candidate_v2_20261122-204345/best.pt \
   --out ../docs/AI_TRADING_UPGRADE/PATRON_CANDIDATE_METRICS.json
+
+# 4. Rolling out-of-sample stability for both frozen checkpoints
+PYTHONPATH=. .venv/Scripts/python.exe scripts/patron_stability.py \
+  --out ../docs/AI_TRADING_UPGRADE/PATRON_ROLLING_STABILITY.json
+
+# 5. Pre-registered fold-wise retraining and residual research (long CPU run)
+PYTHONPATH=. .venv/Scripts/python.exe scripts/patron_predictive_edge.py \
+  --out ../docs/AI_TRADING_UPGRADE/PATRON_PREDICTIVE_EDGE_RESULTS.json
 ```
 
-## 14. Known limitations
+## 15. Known limitations
 
 - No demonstrated directional edge (50.35% accuracy is within noise for this sample).
 - Median forecasts are under-dispersed and do not beat a zero-return persistence baseline on
   MAE.
 - Barrier and momentum heads remain near chance; only the range head was materially repaired.
-- One seed, one local dataset, one test window; no multi-seed or walk-forward promotion.
-- CPU-only training; no claim of production readiness.
-- The Phase 2 strategy gate remains **PENDING at 0/60 reviewed cases**. A forecast is not a
-  trade.
+- One seed, one local dataset. Four-fold retraining was added later, but it still uses one
+  seed, one architecture and an 8-epoch CPU budget; no multi-seed ensemble or production
+  promotion exists.
+- CPU-only training; no claim of production readiness. The fold-wise round found
+  `NO_DEMONSTRATED_EDGE` versus persistence.
+- The Phase 2 strategy gate remains **PENDING acceptance**: 60/60 automated evidence reviews
+  are complete, independent human sign-off is outstanding. A forecast is not a trade.

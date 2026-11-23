@@ -21,6 +21,9 @@ apps/desktop/src-tauri/gen/
 build/
 *.spec
 .qt-webengine/
+launcher/LauncherIntegrity.cs
+license_server/data/
+.local/license/
 
 # Local data and runtime artifacts
 .local/
@@ -54,7 +57,12 @@ assets.zip
 .env.*
 !.env.example
 
+# Server-side license signing key and database (never commit)
+license_server/*.pem
+license_server/*.key
+
 # Virtual environments (all variants)
 .venv*/
 venv*/
 lastseson.txt
+x.bat

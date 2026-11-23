@@ -6,8 +6,11 @@
 Phase 1 `MarketSnapshot`, an append-only evaluation audit trail, and two additive read-only
 endpoints.
 **Implementation status:** **Complete.**
-**60-case acceptance gate:** **PENDING — not passed.** 60 cases were exported for human review,
-but no independent review has been performed. Algorithmic labels alone cannot pass the gate.
+**60-case acceptance gate:** **PENDING — automated review complete (60/60); human sign-off outstanding.**
+All 60 cases were reviewed against the frozen rules by an automated coding agent: 58 conform,
+2 are flagged for manual disposition, and 0 disagreed. Acceptance remains PENDING because the
+documented gate requires independent human review and defines no aggregate threshold. See
+[`PHASE_2_EVALUATION.md`](PHASE_2_EVALUATION.md).
 **Phase 3 has not started. PATRON, PATROR, chat, KIE and the desktop client are unchanged.**
 
 ---
@@ -217,16 +220,19 @@ intentionally declines unclear setups.
 
 - **Exported cases:** 60 (`PHASE_2_EVALUATION.json` → `cases`), stratified deterministically:
   1 candidate, 29 `WAIT`, 30 `NO_TRADE`, in chronological order.
-- **Reviewed cases:** 0.
-- **Gate status:** **PENDING.**
-- **Reason:** no independent human review exists. Selection oversamples informative decisions;
-  it does not cherry-pick outcomes. Every case carries `review_status: "PENDING"`,
-  `reviewer: null`, `reviewed_decision: null`.
-- **Why not authored expected labels:** the brief forbids fabricating a completed reviewed gate.
-  Authored labels from the same engineer who wrote the rules would not be independent review.
-- **What passing requires:** a reviewer must inspect all 60 cases against the frozen rules,
-  record `reviewed_decision` and notes, and the aggregate must meet the Phase 2 gate. The harness
-  helper `aggregate_review()` only counts recorded reviews; it cannot invent them.
+- **Reviewed cases:** **60** by an automated coding agent (not a human). 58 `PASS`, 2
+  `PASS_WITH_MANUAL_FLAG` (cases 40 and 53), 0 disagreements.
+- **Gate status:** review packet **COMPLETE**; **acceptance PENDING**.
+- **Reason:** the documented gate requires independent human review and has no aggregate
+  minimum-agreement or candidate-performance threshold. The automated review cannot supply
+  human approval, so `strategy_validation_status` remains PENDING.
+- **No fabricated labels:** each reviewed decision was independently re-derived from the
+  reconstructed snapshot inputs before comparing with the original. Full evidence and notes are
+  in [`PHASE_2_REVIEW_RESULTS.json`](PHASE_2_REVIEW_RESULTS.json) and
+  [`PHASE_2_REVIEW_EVIDENCE.json`](PHASE_2_REVIEW_EVIDENCE.json).
+- **What passing requires:** a human reviewer must disposition the two flagged cases, review the
+  packet, and confirm the aggregate acceptance threshold. The harness helper
+  `aggregate_review()` only counts recorded reviews; it cannot approve them.
 
 The implementation gate (deterministic rules, tests, API, safe failure) is met. The 60-case
 acceptance gate is not.
@@ -266,7 +272,7 @@ acceptance gate is not.
 | API works | Met — two routes, tested |
 | Tests pass, no weakened regressions | Met — 221 passed, 1 deselected; ruff clean |
 | PATRON unchanged | Met — verified by path diff (see §13) |
-| Evaluation limits honest | Met — PENDING gate, algorithmic labels, no fabricated review |
+| Evaluation limits honest | Met — automated 60/60 review recorded, acceptance PENDING, no fabricated human approval |
 | Report complete | Met — this document |
 
 ---

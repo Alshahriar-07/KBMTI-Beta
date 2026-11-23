@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
+import time
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -22,6 +25,7 @@ from app.core.config import APP_NAME, APP_VERSION, STAGE, Settings, get_settings
 from app.core.errors import ApiError
 from app.core.logging import configure_logging
 from app.intelligence.service import IntelligenceService
+from app.kie.runtime.openmp_compat import configure_windows_openmp_compat
 from app.learning.service import LearningService
 from app.market_data.binance_history import BinanceHistoryClient
 from app.market_data.mt5_gateway import MT5Gateway
@@ -37,6 +41,20 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from app.kie.service import KieService
 
 logger = logging.getLogger(__name__)
+
+_REQUEST_ID_HEADER = "X-Request-ID"
+_REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
+
+
+def _request_id(value: str | None) -> str:
+    """Accept a safe correlation id from a trusted local client, else mint one."""
+
+    candidate = (value or "").strip()
+    return candidate if _REQUEST_ID_RE.fullmatch(candidate) else uuid.uuid4().hex
+
+
+def _request_id_from(request: Request) -> str | None:
+    return getattr(request.state, "request_id", None)
 
 
 def create_app(
@@ -77,9 +95,20 @@ def create_app(
         learning=learning,
     )
     container.log_file = log_file
+    if resolved.patron_enabled and container.kie.enabled:
+        # Both workloads are enabled in this process. Set the compatibility guard
+        # before either OpenMP runtime is initialized; the failure mode is a native
+        # abort with no Python traceback (the old HTTP 502).
+        configure_windows_openmp_compat()
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        # Production startup is licensed. The test suite constructs the app with
+        # start_polling=False and bypasses the network-bound startup gate.
+        if start_polling:
+            from app.launch_guard import enforce
+
+            application.state.license = enforce()
         container.broadcaster.bind_loop(asyncio.get_running_loop())
         task: asyncio.Task | None = None
         if start_polling:
@@ -151,16 +180,52 @@ def create_app(
                             "code": "REQUEST_TOO_LARGE",
                             "message": f"Request bodies are limited to {resolved.max_request_bytes} bytes.",
                             "details": {"limit": resolved.max_request_bytes},
+                            "request_id": _request_id_from(request),
                         }
                     },
                 )
         return await call_next(request)
 
+    @application.middleware("http")
+    async def request_context(request: Request, call_next):  # type: ignore[no-untyped-def]
+        """Attach one correlation id to logs and to every HTTP response."""
+
+        request.state.request_id = _request_id(request.headers.get(_REQUEST_ID_HEADER))
+        started = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception(
+                "http_request_failed request_id=%s method=%s path=%s",
+                request.state.request_id,
+                request.method,
+                request.url.path,
+            )
+            raise
+        elapsed_ms = round((time.perf_counter() - started) * 1000.0, 1)
+        response.headers[_REQUEST_ID_HEADER] = request.state.request_id
+        logger.info(
+            "http_request request_id=%s method=%s path=%s status=%s duration_ms=%s",
+            request.state.request_id,
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+        )
+        return response
+
     @application.exception_handler(ApiError)
     async def handle_api_error(request: Request, exc: ApiError) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
-            content={"error": {"code": exc.code, "message": exc.message, "details": exc.details}},
+            content={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                    "details": exc.details,
+                    "request_id": _request_id_from(request),
+                }
+            },
         )
 
     @application.exception_handler(RequestValidationError)
@@ -172,6 +237,29 @@ def create_app(
                     "code": "VALIDATION_ERROR",
                     "message": "The request did not match the documented API contract.",
                     "details": {"errors": exc.errors()},
+                    "request_id": _request_id_from(request),
+                }
+            },
+        )
+
+    @application.exception_handler(Exception)
+    async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+        """Never leak a traceback or turn an internal failure into a fake success."""
+
+        logger.exception(
+            "unhandled_exception request_id=%s method=%s path=%s",
+            _request_id_from(request),
+            request.method,
+            request.url.path,
+        )
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "The backend failed while processing this request.",
+                    "details": {},
+                    "request_id": _request_id_from(request),
                 }
             },
         )

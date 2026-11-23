@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
@@ -158,6 +160,13 @@ class _FakeKie:
             raise TimeoutError("generation timed out")
         if self.mode == "malformed":
             return {"text": "not json at all", "run_id": "run-bad"}
+        if self.mode == "finish-timeout":
+            return {
+                "text": "",
+                "run_id": "run-timeout",
+                "finish": "timeout",
+                "cancelled": True,
+            }
         authoritative = json.loads(self.prompt.split("AUTHORITATIVE:\n", 1)[1])
         summary = "Deterministic market evidence is preserved for review."
         if self.mode == "invented-number":
@@ -421,7 +430,12 @@ def test_qwen_may_quote_a_number_from_deterministic_reason_text(settings: Settin
 
 @pytest.mark.parametrize(
     ("mode", "expected"),
-    [("invented-number", QwenStatus.INVALID), ("malformed", QwenStatus.INVALID), ("timeout", QwenStatus.TIMEOUT)],
+    [
+        ("invented-number", QwenStatus.INVALID),
+        ("malformed", QwenStatus.INVALID),
+        ("timeout", QwenStatus.TIMEOUT),
+        ("finish-timeout", QwenStatus.TIMEOUT),
+    ],
 )
 def test_qwen_failures_keep_deterministic_response(settings: Settings, mode: str, expected: QwenStatus) -> None:
     analysis, _, _ = _stack(settings)
@@ -484,15 +498,25 @@ def test_qwen_initializing_then_ready_returns_real_interpretation(settings: Sett
     assert result.readiness.qwen.reason_code == "USED"
 
 
-def test_qwen_readiness_timeout_keeps_initializing_state(settings: Settings) -> None:
+def test_qwen_readiness_timeout_is_explicit(settings: Settings) -> None:
     analysis, _, _ = _stack(settings)
     snapshot = analysis.snapshot()
-    kie = _NeverReadyKie()
-    result = _service(settings, _run(snapshot), kie=kie).market_intelligence(use_qwen=True)
+
+    class SlowNeverReadyKie(_NeverReadyKie):
+        def wait_until_ready(self, timeout: float) -> bool:
+            self.wait_calls.append(timeout)
+            time.sleep(0.02)
+            return False
+
+    kie = SlowNeverReadyKie()
+    service = _service(settings, _run(snapshot), kie=kie)
+    service._qwen_ready_wait_seconds = 0.01
+    result = service.market_intelligence(use_qwen=True)
     assert kie.wait_calls
-    assert result.ai_status.status is QwenStatus.INITIALIZING
+    assert result.ai_status.status is QwenStatus.INITIALIZATION_TIMEOUT
     assert result.ai_status.used is False
-    assert result.readiness.qwen.status == "INITIALIZING"
+    assert "did not finish initializing" in (result.ai_status.error or "")
+    assert result.readiness.qwen.status == "FAILED"
     assert result.readiness.qwen.health_state == "INITIALIZING"
     assert result.ai_market_interpretation
 
@@ -531,6 +555,45 @@ def test_qwen_unavailable_returns_explicit_status(settings: Settings) -> None:
     assert result.ai_status.status is QwenStatus.UNAVAILABLE
     assert result.ai_status.used is False
     assert result.forecast_source is not None
+
+
+def test_concurrent_refresh_requests_share_one_inference(settings: Settings) -> None:
+    analysis, _, _ = _stack(settings)
+    snapshot = analysis.snapshot()
+
+    class BlockingKie(_FakeKie):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls = 0
+            self.entered = threading.Event()
+            self.release = threading.Event()
+
+        def chat(self, request):
+            self.calls += 1
+            self.entered.set()
+            assert self.release.wait(timeout=5.0)
+            return super().chat(request)
+
+    kie = BlockingKie()
+    service = _service(settings, _run(snapshot), kie=kie)
+    results = []
+
+    def run() -> None:
+        results.append(service.market_intelligence(use_qwen=True, refresh=True))
+
+    first = threading.Thread(target=run)
+    first.start()
+    assert kie.entered.wait(timeout=5.0)
+    second = threading.Thread(target=run)
+    second.start()
+    time.sleep(0.05)
+    kie.release.set()
+    first.join(timeout=10)
+    second.join(timeout=10)
+    assert not first.is_alive() and not second.is_alive()
+    assert kie.calls == 1
+    assert len(results) == 2
+    assert all(result.ai_status.used for result in results)
 
 
 def test_assistant_market_intelligence_endpoint(make_client, settings: Settings) -> None:

@@ -1,0 +1,193 @@
+{
+  "epochs_run": 8,
+  "best_epoch": 7,
+  "best_val_loss": 1.4309614449739456,
+  "stopped_early": false,
+  "run_dir": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\backend\\experiments\\kbmti_edge_f4_residual_20261123-194749",
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.518898177714575,
+      "train_terms": {
+        "loss": 1.518898177714575,
+        "barrier_loss": 1.0999858521279835,
+        "quantile_loss": 0.0025168621629875687,
+        "momentum_loss": 1.612311445531391,
+        "pattern_loss": 0.6262210444325492
+      },
+      "val_loss": 1.491269255677859,
+      "val_terms": {
+        "loss": 1.491269255677859,
+        "barrier_loss": 1.098796859383583,
+        "quantile_loss": 0.0017857692922310282,
+        "momentum_loss": 1.6094294438759487,
+        "pattern_loss": 0.45867157479127246
+      },
+      "val_barrier_accuracy": 0.27746338215712385,
+      "val_momentum_accuracy": 0.23551930758988016,
+      "lr": 0.0005,
+      "seconds": 24.45139217376709
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.4770816876774742,
+      "train_terms": {
+        "loss": 1.4770816876774742,
+        "barrier_loss": 1.1011023322741191,
+        "quantile_loss": 0.0026672956439489056,
+        "momentum_loss": 1.6213521985780626,
+        "pattern_loss": 0.32694395028409506
+      },
+      "val_loss": 1.462542066971461,
+      "val_terms": {
+        "loss": 1.462542066971461,
+        "barrier_loss": 1.0998667428890865,
+        "quantile_loss": 0.0011390578414041859,
+        "momentum_loss": 1.617518275976181,
+        "pattern_loss": 0.2535506294419368
+      },
+      "val_barrier_accuracy": 0.2827896138482024,
+      "val_momentum_accuracy": 0.2075565912117177,
+      "lr": 0.0005,
+      "seconds": 29.210034608840942
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.4597968004998707,
+      "train_terms": {
+        "loss": 1.4597968004998707,
+        "barrier_loss": 1.0993462006251018,
+        "quantile_loss": 0.0013626170305845637,
+        "momentum_loss": 1.6185736514273144,
+        "pattern_loss": 0.23582149758225396
+      },
+      "val_loss": 1.4641610532999039,
+      "val_terms": {
+        "loss": 1.4641610532999039,
+        "barrier_loss": 1.1066132833560307,
+        "quantile_loss": 0.001105002942495048,
+        "momentum_loss": 1.6126280476649602,
+        "pattern_loss": 0.22611422340075174
+      },
+      "val_barrier_accuracy": 0.28079227696404796,
+      "val_momentum_accuracy": 0.22087217043941412,
+      "lr": 0.0005,
+      "seconds": 24.734886646270752
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.455756669952756,
+      "train_terms": {
+        "loss": 1.455756669952756,
+        "barrier_loss": 1.0980583088738578,
+        "quantile_loss": 0.001187405388225757,
+        "momentum_loss": 1.6187928915023804,
+        "pattern_loss": 0.21834903778064818
+      },
+      "val_loss": 1.4482776125272114,
+      "val_terms": {
+        "loss": 1.4482776125272114,
+        "barrier_loss": 1.0953140531977017,
+        "quantile_loss": 0.0010103301659304027,
+        "momentum_loss": 1.6093857139348984,
+        "pattern_loss": 0.20050709011654058
+      },
+      "val_barrier_accuracy": 0.2886151797603196,
+      "val_momentum_accuracy": 0.20173102529960052,
+      "lr": 0.0005,
+      "seconds": 27.183837890625
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.4426395211900984,
+      "train_terms": {
+        "loss": 1.4426395211900984,
+        "barrier_loss": 1.0882635996455239,
+        "quantile_loss": 0.0010976678514409634,
+        "momentum_loss": 1.6122449579693021,
+        "pattern_loss": 0.20552830469040645
+      },
+      "val_loss": 1.4521319667498271,
+      "val_terms": {
+        "loss": 1.4521319667498271,
+        "barrier_loss": 1.1005085681875546,
+        "quantile_loss": 0.0009967219545311916,
+        "momentum_loss": 1.6087353726228077,
+        "pattern_loss": 0.19253058296938738
+      },
+      "val_barrier_accuracy": 0.3129161118508655,
+      "val_momentum_accuracy": 0.23052596537949402,
+      "lr": 0.0005,
+      "seconds": 27.0352783203125
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.4412710127376376,
+      "train_terms": {
+        "loss": 1.4412710127376376,
+        "barrier_loss": 1.0867801081566584,
+        "quantile_loss": 0.0010645246878820693,
+        "momentum_loss": 1.6158884650184995,
+        "pattern_loss": 0.2016578416029612
+      },
+      "val_loss": 1.439182311296463,
+      "val_terms": {
+        "loss": 1.439182311296463,
+        "barrier_loss": 1.0871112619837124,
+        "quantile_loss": 0.0009384919030708261,
+        "momentum_loss": 1.6068595002094905,
+        "pattern_loss": 0.19840427736441293
+      },
+      "val_barrier_accuracy": 0.3646804260985353,
+      "val_momentum_accuracy": 0.23868175765645805,
+      "lr": 0.0005,
+      "seconds": 30.025310277938843
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.4369000849269686,
+      "train_terms": {
+        "loss": 1.4369000849269686,
+        "barrier_loss": 1.0836030670574732,
+        "quantile_loss": 0.0010377981650110865,
+        "momentum_loss": 1.6114550828933716,
+        "pattern_loss": 0.19978779483409154
+      },
+      "val_loss": 1.4309614449739456,
+      "val_terms": {
+        "loss": 1.4309614449739456,
+        "barrier_loss": 1.0799421668052673,
+        "quantile_loss": 0.0009240779812292507,
+        "momentum_loss": 1.605318730076154,
+        "pattern_loss": 0.19354292439917722
+      },
+      "val_barrier_accuracy": 0.3581890812250333,
+      "val_momentum_accuracy": 0.23918109187749667,
+      "lr": 0.0005,
+      "seconds": 25.396188020706177
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.4222895020530337,
+      "train_terms": {
+        "loss": 1.4222895020530337,
+        "barrier_loss": 1.0700077641577947,
+        "quantile_loss": 0.0010375779016786033,
+        "momentum_loss": 1.6082400509289332,
+        "pattern_loss": 0.19730764840330398
+      },
+      "val_loss": 1.4347718805074692,
+      "val_terms": {
+        "loss": 1.4347718805074692,
+        "barrier_loss": 1.0840064411362011,
+        "quantile_loss": 0.0009425513999303803,
+        "momentum_loss": 1.6061045577128727,
+        "pattern_loss": 0.19067969297369322
+      },
+      "val_barrier_accuracy": 0.3988015978695073,
+      "val_momentum_accuracy": 0.22836218375499334,
+      "lr": 0.0005,
+      "seconds": 23.757096529006958
+    }
+  ]
+}

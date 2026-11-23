@@ -1,6 +1,6 @@
 {
   "dataset_version": "btcusdt-15m-v1.0.0",
-  "generated_at": "2026-11-22T14:58:27+00:00",
+  "generated_at": "2026-11-23T12:23:46+00:00",
   "raw_path": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\backend\\data\\patron\\BTCUSDT_15m.parquet",
   "raw_sha256": "5eb3289b32b5980d47f5af20be99484e16d9be8aa32b5f4bec12c965aa22458b",
   "dataset_path": "C:\\Users\\alsha\\OneDrive\\Documents\\AI TREDER\\PATRON\\data\\features\\BTCUSDT_dataset.parquet",

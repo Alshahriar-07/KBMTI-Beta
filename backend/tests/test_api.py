@@ -30,6 +30,29 @@ def test_root_documents_read_only_scope(client: TestClient) -> None:
     assert "no trading" in body["note"].lower()
 
 
+def test_request_id_is_preserved_and_returned_on_errors(client: TestClient) -> None:
+    supplied = "kbmti-correlation-1234"
+    response = client.get("/api/v1/health", headers={"X-Request-ID": supplied})
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == supplied
+
+    error = client.post(
+        "/api/v1/market/symbol",
+        json={"symbol": "NOTAREALPAIR"},
+        headers={"X-Request-ID": supplied},
+    )
+    assert error.status_code == 422
+    assert error.headers["X-Request-ID"] == supplied
+    assert error.json()["error"]["request_id"] == supplied
+
+
+def test_invalid_request_id_is_replaced_not_reflected(client: TestClient) -> None:
+    response = client.get("/api/v1/health", headers={"X-Request-ID": "x" * 65})
+    generated = response.headers["X-Request-ID"]
+    assert generated != "x" * 65
+    assert len(generated) == 32
+
+
 def test_disconnected_startup_is_usable(make_client) -> None:  # type: ignore[no-untyped-def]
     failing = MT5Gateway(module=FakeMT5(fail_initialize=True))
     client = make_client(gateway=failing)

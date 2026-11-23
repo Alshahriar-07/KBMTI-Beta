@@ -1,186 +1,523 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-title KBMTI Dev Testing
+chcp 65001 >nul
+title KBMTI // SECURE DEVELOPMENT TERMINAL
+mode con: cols=70 lines=42
 color 0A
 
-:: ================= SETTINGS =================
-:: Set to 1 to skip the whole intro animation
-set "SKIP_INTRO=0"
-:: ============================================
+:: ============================================================
+::  KBMTI SECURE DEVELOPMENT TERMINAL
+::  Usage:  KBMTI-RAW-TEST.exe          normal start
+::          KBMTI-RAW-TEST.exe /skip    skip the boot intro
+:: ============================================================
 
-:: Always run from the folder containing this BAT file
+set "SKIP_INTRO=0"
+if /I "%~1"=="/skip" set "SKIP_INTRO=1"
+
+if /I "%~1"=="/selftest" (
+    echo KBMTI launcher self-test OK
+    exit /b 0
+)
+
+:: ------------------------------------------------------------
+::  SERVER-SIDE CREDENTIAL VERIFICATION
+::  Access keys are never stored in this file. The Python
+::  launcher exchanges the key with the KBMTI license service
+::  and receives short-lived signed launch tickets.
+:: ------------------------------------------------------------
+set "hex=0123456789ABCDEF"
+
+:: 60 box characters and 60 spaces (used to draw aligned frames)
+set "EQ=════════════════════════════════════════════════════════════"
+set "SP=                                                            "
+
 cd /d "%~dp0"
 
-:: ---------- Quick check before animation ----------
+for /f %%a in ('"prompt $H & for %%b in (1) do rem"') do set "BS=%%a"
+
+
+:: ============================================================
+::  ENVIRONMENT CHECK
+:: ============================================================
+
 if not exist "backend\.venv\Scripts\activate.bat" (
     color 0C
-    echo.
-    echo  [ERROR] Virtual environment was not found:
-    echo          %~dp0backend\.venv\
+    cls
+    call :LOGO
+    call :TOP
+    call :CBOX "SYSTEM ERROR"
+    call :MID
+    call :LBOX "[ERROR] BACKEND ENVIRONMENT NOT FOUND"
+    call :LBOX "Expected: backend\.venv\"
+    call :BOT
     echo.
     pause
     exit /b 1
 )
 
-set "hex=0123456789ABCDEF"
-for /f %%a in ('"prompt $H & for %%b in (1) do rem"') do set "BS=%%a"
+if "%SKIP_INTRO%"=="1" goto LOGIN
 
-if "%SKIP_INTRO%"=="1" goto :launch
+:: ============================================================
+::  BOOT INTRO
+:: ============================================================
 
-:: =====================================================
-:: PHASE 1 - NETWORK / PORT SCAN (~6s)
-:: =====================================================
 cls
 color 0A
+call :LOGO
 echo.
-echo  [ PHASE 1/6 ]  NETWORK SURFACE SCAN
-echo  ------------------------------------------------------------
-for /L %%n in (1,1,36) do (
-    set /a p=!random! %% 65535 + 1
-    set "pp=     !p!"
-    set /a s=!random! %% 5
-    if !s!==0 (set "st=OPEN      ") else if !s!==1 (set "st=FILTERED  ") else (set "st=CLOSED    ")
-    echo   [SCAN] 127.0.0.1:!pp:~-5!   !st!  ttl=!random:~-2!
-    call :ms 150
-)
+echo       INITIALIZING DEVELOPMENT ENVIRONMENT
+echo.
+echo       [BOOT] Kernel initialization...
+call :ms 250
+echo       [BOOT] Loading security modules...
+call :ms 250
+echo       [BOOT] Preparing authentication system...
+call :ms 250
 
-:: =====================================================
-:: PHASE 2 - KEY DECRYPT CASCADE (~6s)
-:: =====================================================
-cls
-color 0E
-echo.
-echo  [ PHASE 2/6 ]  DECRYPTING ACCESS KEY
-echo  ------------------------------------------------------------
-set "target=KBMTI-DEV-ACCESS-A7F3C9E1"
-for /L %%i in (0,1,24) do (
-    set /a rest=24-%%i
-    set "head=!target:~0,%%i!"
-    set "tail="
-    if !rest! gtr 0 call :rh !rest! tail
-    echo   [DECRYPT] !head!!tail!   locked %%i/24
-    call :ms 220
-)
-echo.
-echo   [KEY] Access key verified.
-call :ms 600
+:: ============================================================
+::  PHASE 1 - NETWORK SCAN
+:: ============================================================
 
-:: =====================================================
-:: PHASE 3 - MEMORY DUMP (~6s)
-:: =====================================================
-cls
-color 0A
-echo.
-echo  [ PHASE 3/6 ]  MEMORY SEGMENT DUMP
-echo  ------------------------------------------------------------
-for /L %%n in (1,1,30) do (
-    call :rh 8 addr
-    set "bytes="
-    for /L %%j in (1,1,8) do (
-        call :rh 2 b
-        set "bytes=!bytes!!b! "
-    )
-    call :rh 16 asc
-    echo   0x!addr!  !bytes! !asc!
-    call :ms 180
-)
+call :PHASE 01 "NETWORK SURFACE SCAN" 0A
 
-:: =====================================================
-:: PHASE 4 - MODULE INTEGRITY CHECK (~6s)
-:: =====================================================
-cls
-color 0B
-echo.
-echo  [ PHASE 4/6 ]  MODULE INTEGRITY CHECK
-echo  ------------------------------------------------------------
-for %%m in (core backend api database auth scheduler logger watchdog cache queue config models) do (
-    set "n=%%m               "
-    <nul set /p "=  [CHECK] !n:~0,12! "
-    call :ms 280
-    call :rh 16 h
-    echo sha:!h!  [ PASS ]
-    call :ms 250
-)
-
-:: =====================================================
-:: PHASE 5 - SECURE TUNNEL WITH SPINNER (~7s)
-:: =====================================================
-cls
-color 0A
-echo.
-echo  [ PHASE 5/6 ]  ESTABLISHING SECURE TUNNEL
-echo  ------------------------------------------------------------
-echo.
-call :spin "Resolving local host                "
-call :spin "Handshake with backend              "
-call :spin "Negotiating encrypted channel       "
-call :spin "Injecting runtime environment       "
-call :spin "Syncing configuration               "
-
-:: =====================================================
-:: PHASE 6 - ACCESS GRANTED + LOGO (~4s)
-:: =====================================================
-cls
-color 0B
-echo.
-echo  ============================================================
-echo                       ACCESS  GRANTED
-echo  ============================================================
-echo.
-echo       K   K  B B B  M   M  T T T  I
-echo       K  K   B   B  MM MM    T    I
-echo       KKK    B B B  M M M    T    I
-echo       K  K   B   B  M   M    T    I
-echo       K   K  B B B  M   M    T    I
-echo.
-echo                  [ DEV TESTING MODE ]
-echo.
-echo  ============================================================
-echo.
-<nul set /p "=  [LAUNCH] ["
-for /L %%i in (1,1,40) do (
-    <nul set /p "=#"
+for %%P in (21 22 53 80 135 139 443 445 3000 3306 5000 5432 6379 8000 8080 8443) do (
+    set /a s=!random! %% 3
+    set "st=CLOSED  "
+    if !s!==0 set "st=OPEN    "
+    if !s!==1 set "st=FILTERED"
+    set /a lat=!random! %% 40 + 1
+    set "pp=%%P      "
+    echo   [SCAN] 127.0.0.1:!pp:~0,5! !st!  !lat! ms
     call :ms 70
 )
-echo ] 100%%
-echo.
-call :ms 400
 
-:: =====================================================
-:: LAUNCH
-:: =====================================================
-:launch
+echo.
+echo   [OK] NETWORK SCAN COMPLETE
+call :ms 250
+
+:: ============================================================
+::  PHASE 2 - ACCESS KEY DECRYPTION (visual only, decoy text)
+:: ============================================================
+
+call :PHASE 02 "ACCESS KEY DECRYPTION" 0E
+
+set "target=KBMTI-ACCESS-7F3C-A9E1-D204"
+
+for /L %%i in (1,1,27) do (
+    set /a rest=27-%%i
+    set "head=!target:~0,%%i!"
+    set "tail="
+    if !rest! gtr 0 call :RH !rest! tail
+    echo   [DECRYPT] !head!!tail!
+    call :ms 60
+)
+
+echo.
+echo   [OK] ENCRYPTION VERIFIED
+call :ms 250
+
+:: ============================================================
+::  PHASE 3 - MEMORY ANALYSIS
+:: ============================================================
+
+call :PHASE 03 "MEMORY SEGMENT ANALYSIS" 0A
+
+for /L %%n in (1,1,16) do (
+    call :RH 8 addr
+    call :RH 24 data
+    echo   0x!addr!  !data:~0,4! !data:~4,4! !data:~8,4! !data:~12,4! !data:~16,4! !data:~20,4!
+    call :ms 55
+)
+
+echo.
+echo   [OK] MEMORY ANALYSIS COMPLETE
+call :ms 250
+
+:: ============================================================
+::  PHASE 4 - MODULE VERIFICATION
+:: ============================================================
+
+call :PHASE 04 "MODULE INTEGRITY CHECK" 0B
+
+for %%m in (
+    CORE BACKEND API DATABASE AUTH
+    SCHEDULER LOGGER WATCHDOG CACHE
+    QUEUE CONFIG MODELS
+) do (
+    set "mn=%%m            "
+    <nul set /p "=  [VERIFY] !mn:~0,10! "
+    call :ms 80
+    call :RH 16 h
+    echo [!h!] [PASS]
+)
+
+echo.
+echo   [OK] ALL MODULES VERIFIED
+call :ms 250
+
+:: ============================================================
+::  PHASE 5 - SECURE CONNECTION
+:: ============================================================
+
+call :PHASE 05 "ESTABLISHING SECURE CONNECTION" 0A
+
+call :SPIN "Resolving local host"
+call :SPIN "Initializing backend"
+call :SPIN "Negotiating secure channel"
+call :SPIN "Loading runtime environment"
+call :SPIN "Synchronizing configuration"
+call :SPIN "Verifying dependencies"
+
+echo.
+echo   [OK] SECURE CONNECTION ESTABLISHED
+call :ms 250
+
+:: ============================================================
+::  PHASE 6 - SYSTEM READY
+:: ============================================================
+
+cls
+color 0B
+call :LOGO
+call :TOP
+call :BLANK
+call :CBOX "ACCESS PORTAL READY"
+call :BLANK
+call :CBOX "SECURITY SYSTEM ACTIVATED"
+call :BLANK
+call :BOT
+echo.
+call :BAR "[SYSTEM BOOT]"
+call :ms 500
+
+:: ============================================================
+::  LOGIN PORTAL
+:: ============================================================
+
+:LOGIN
+
+cls
+color 0B
+call :LOGO
+call :TOP
+call :CBOX "SECURE LOGIN"
+call :MID
+call :BLANK
+call :LBOX "[1]  LOGIN AS DEVELOPER"
+call :BLANK
+call :LBOX "[2]  LOGIN AS USER"
+call :BLANK
+call :LBOX "[3]  LOGIN AS ADMIN"
+call :BLANK
+call :LBOX "[4]  EXIT"
+call :BLANK
+call :BOT
+echo.
+
+choice /C 1234 /N /M "  Select login type [1-4]: "
+
+if errorlevel 4 exit /b 0
+if errorlevel 3 goto ADMIN_LOGIN
+if errorlevel 2 goto USER_LOGIN
+if errorlevel 1 goto DEV_LOGIN
+goto LOGIN
+
+:: ============================================================
+::  DEVELOPER LOGIN
+:: ============================================================
+
+:DEV_LOGIN
+
+cls
+color 0B
+call :SMALL_LOGO
+echo.
+call :TOP
+call :CBOX "DEVELOPER AUTHENTICATION"
+call :MID
+call :LBOX "ACCESS LEVEL : DEVELOPER"
+call :LBOX "KEY FORMAT   : KBMTI-XXXXX-0000"
+call :LBOX "VERIFIED BY  : KBMTI LICENSE SERVICE"
+call :LBOX "ESC = BACK"
+call :BOT
+echo.
+
+set "LOGIN_ROLE=DEVELOPER"
+goto LICENSED_LAUNCH
+
+:: ============================================================
+::  USER LOGIN
+:: ============================================================
+
+:USER_LOGIN
+
+cls
+color 0B
+call :SMALL_LOGO
+echo.
+call :TOP
+call :CBOX "USER AUTHENTICATION"
+call :MID
+call :LBOX "ACCESS LEVEL : USER"
+call :LBOX "KEY FORMAT   : KBMTI-XXXXX-0000"
+call :LBOX "VERIFIED BY  : KBMTI LICENSE SERVICE"
+call :LBOX "ESC = BACK"
+call :BOT
+echo.
+
+set "LOGIN_ROLE=USER"
+goto LICENSED_LAUNCH
+
+:: ============================================================
+::  ADMIN LOGIN  (key + password)
+:: ============================================================
+
+:ADMIN_LOGIN
+
+cls
+color 0E
+call :SMALL_LOGO
+echo.
+call :TOP
+call :CBOX "ADMINISTRATOR LOGIN"
+call :MID
+call :LBOX "ACCESS LEVEL : SYSTEM ADMINISTRATOR"
+call :LBOX "STEP 1 OF 2  : ADMIN KEY"
+call :LBOX "STEP 2 OF 2  : ADMIN PASSWORD"
+call :LBOX "VERIFIED BY  : KBMTI LICENSE SERVICE"
+call :LBOX "ESC = BACK"
+call :BOT
+echo.
+
+set "LOGIN_ROLE=ADMINISTRATOR"
+goto LICENSED_LAUNCH
+
+:: ============================================================
+::  LICENSED APPLICATION LAUNCH
+:: ============================================================
+
+:LICENSED_LAUNCH
+
+cls
+color 0B
+call :SMALL_LOGO
+echo.
+call :TOP
+call :CBOX "SECURE LICENSE CHECK"
+call :MID
+call :LBOX "ROLE       : !LOGIN_ROLE!"
+call :LBOX "GATEWAY    : KBMTI LICENSE SERVICE"
+call :LBOX "TRANSPORT  : SIGNED SHORT-LIVED TOKEN"
+call :LBOX "KEY INPUT  : AUTO-UPPERCASE + AUTO-HYPHEN"
+call :LBOX "PASSWORD   : MASKED (*)  ENTER = SUBMIT"
+call :BOT
+echo.
+echo   Type the access key using letters and numbers only; uppercase and
+echo   the two hyphens are inserted automatically.
+echo   The administrator password is masked. Backspace/Delete edit; Escape returns.
+echo.
+
 call "backend\.venv\Scripts\activate.bat"
 if errorlevel 1 (
     color 0C
     echo.
-    echo  [ERROR] Could not activate backend virtual environment.
+    echo   [ERROR] VIRTUAL ENVIRONMENT ACTIVATION FAILED
+    echo.
     pause
     exit /b 1
 )
 
-echo  ============================================================
-echo                      KBMTI IS STARTING
-echo  ============================================================
-echo.
+if /I "!LOGIN_ROLE!"=="DEVELOPER" set "KB_ROLE=DEVELOPER"
+if /I "!LOGIN_ROLE!"=="USER" set "KB_ROLE=USER"
+if /I "!LOGIN_ROLE!"=="ADMINISTRATOR" set "KB_ROLE=ADMIN"
 
-python -m kbmti
+python -m kbmti.launch --role !KB_ROLE!
+set "APP_RC=!errorlevel!"
 
+if "!APP_RC!"=="0" (
+    echo.
+    echo   [EXIT] KBMTI PROCESS HAS ENDED
+    echo.
+    pause
+    exit /b 0
+)
+
+if "!APP_RC!"=="2" goto LOGIN
+
+set /a ATTEMPTS+=1
+set /a ATT_LEFT=3-ATTEMPTS
+if !ATTEMPTS! GEQ 3 goto LOCKOUT
+goto ACCESS_DENIED
+
+:: ============================================================
+::  ACCESS DENIED
+:: ============================================================
+
+:ACCESS_DENIED
+
+cls
+color 0C
+call :SMALL_LOGO
 echo.
-echo  [EXIT] KBMTI process has ended.
+call :TOP
+call :CBOX "ACCESS DENIED"
+call :MID
+call :BLANK
+call :LBOX "[ERROR]    INVALID CREDENTIALS"
+call :LBOX "[SECURITY] AUTHENTICATION FAILED"
+call :LBOX "[SECURITY] ATTEMPTS LEFT: !ATT_LEFT!"
+call :BLANK
+call :BOT
+
+call :ms 1500
+
+if !ATTEMPTS! GEQ 3 goto LOCKOUT
+goto LOGIN
+
+:: ============================================================
+::  LOCKOUT AFTER 3 FAILED ATTEMPTS
+:: ============================================================
+
+:LOCKOUT
+
+color 0C
+
+for /L %%t in (20,-1,1) do (
+    cls
+    call :SMALL_LOGO
+    echo.
+    call :TOP
+    call :CBOX "TERMINAL LOCKED"
+    call :MID
+    call :BLANK
+    call :CBOX "TOO MANY FAILED ATTEMPTS"
+    call :CBOX "RETRY IN %%t SECONDS"
+    call :BLANK
+    call :BOT
+    call :ms 1000
+)
+
+set "ATTEMPTS=0"
+goto LOGIN
+
+:: ============================================================
+::  SUBROUTINES
+:: ============================================================
+
+:: ---- Main logo (K B M T I)
+:LOGO
 echo.
-pause
+echo             ██╗  ██╗██████╗ ███╗   ███╗████████╗██╗
+echo             ██║ ██╔╝██╔══██╗████╗ ████║╚══██╔══╝██║
+echo             █████╔╝ ██████╔╝██╔████╔██║   ██║   ██║
+echo             ██╔═██╗ ██╔══██╗██║╚██╔╝██║   ██║   ██║
+echo             ██║  ██╗██████╔╝██║ ╚═╝ ██║   ██║   ██║
+echo             ╚═╝  ╚═╝╚═════╝ ╚═╝     ╚═╝   ╚═╝   ╚═╝
+echo.
+echo                      KBMTI // SYSTEM CORE
+echo                 ADVANCED DEVELOPMENT TERMINAL
+echo.
 exit /b
 
-:: ---------------- helpers ----------------
+:: ---- Small header
+:SMALL_LOGO
+echo.
+call :TOP
+call :CBOX "K B M T I   //   SECURE DEVELOPMENT TERMINAL"
+call :BOT
+exit /b
 
-:: Accurate delay in milliseconds
+:: ---- Boot phase header: call :PHASE NN "TITLE" COLOR
+:PHASE
+cls
+color %~3
+call :SMALL_LOGO
+echo.
+echo   [%~1/06] %~2
+echo   !EQ!
+echo.
+exit /b
+
+:: ---- Frame pieces
+:TOP
+echo   ╔!EQ!╗
+exit /b
+
+:MID
+echo   ╠!EQ!╣
+exit /b
+
+:BOT
+echo   ╚!EQ!╝
+exit /b
+
+:BLANK
+echo   ║!SP!║
+exit /b
+
+:: ---- Centered line inside the frame
+:CBOX
+set "_t=%~1"
+call :STRLEN _t _l
+set /a _tot=60-_l, _lf=_tot/2, _rt=_tot-_lf
+call :PAD _lf _lp
+call :PAD _rt _rp
+echo   ║!_lp!!_t!!_rp!║
+exit /b
+
+:: ---- Left aligned line inside the frame
+:LBOX
+set "_t=    %~1"
+call :STRLEN _t _l
+set /a _rt=60-_l
+call :PAD _rt _rp
+echo   ║!_t!!_rp!║
+exit /b
+
+:: ---- Spaces: call :PAD COUNTVAR OUTVAR
+:PAD
+set "_c=!%~1!"
+if "!_c!"=="0" (
+    set "%~2="
+) else (
+    for %%N in (!_c!) do set "%~2=!SP:~0,%%N!"
+)
+exit /b
+
+:: ---- String length: call :STRLEN VARNAME OUTVAR
+:STRLEN
+set "_s=!%~1!"
+set "_n=0"
+if "!_s!"=="" goto SL_DONE
+for %%P in (64 32 16 8 4 2 1) do (
+    if not "!_s:~%%P,1!"=="" (
+        set /a _n+=%%P
+        set "_s=!_s:~%%P!"
+    )
+)
+set /a _n+=1
+:SL_DONE
+set "%~2=!_n!"
+exit /b
+
+:: ---- Progress bar: call :BAR "LABEL"
+:BAR
+<nul set /p "=  %~1 "
+for /L %%i in (1,1,34) do (
+    <nul set /p "=█"
+    call :ms 28
+)
+echo  100%%
+echo.
+exit /b
+
+:: ---- Delay in milliseconds
 :ms
 ping 192.0.2.1 -n 1 -w %~1 >nul
 exit /b
 
-:: Random hex string. Usage: call :rh LENGTH VARNAME
-:rh
+:: ---- Random hex string: call :RH LENGTH OUTVAR
+:RH
 set "_o="
 for /L %%j in (1,1,%~1) do (
     set /a _r=!random! %% 16
@@ -189,14 +526,14 @@ for /L %%j in (1,1,%~1) do (
 set "%~2=!_o!"
 exit /b
 
-:: Spinner line. Usage: call :spin "text"
-:spin
+:: ---- Connection spinner: call :SPIN "TEXT"
+:SPIN
 <nul set /p "=  [LINK] %~1 "
-for /L %%k in (1,1,4) do (
+for %%r in (1 2) do (
     for %%c in ("/" "-" "\" "|") do (
         <nul set /p "=%%~c!BS!"
-        call :ms 90
+        call :ms 45
     )
 )
-echo [ OK ]
+echo [OK]
 exit /b

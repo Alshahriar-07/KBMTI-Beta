@@ -110,9 +110,10 @@
   "gate": {
     "required_cases": 60,
     "exported_cases": 60,
-    "reviewed_cases": 0,
-    "status": "PENDING",
-    "reason": "No independent human review of the 60 exported cases has been performed. The gate must not be reported as passed on algorithmic labels alone."
+    "reviewed_cases": 60,
+    "status": "COMPLETE",
+    "reason": "All 60 cases have an evidence-based automated review, but the documented Phase 2 gate requires independent human review, and the repository defines no minimum agreement or candidate-performance acceptance threshold. Acceptance therefore remains PENDING; strategy_validation_status stays PENDING and no trade plan is enabled.",
+    "acceptance_status": "PENDING"
   },
   "case_selection": {
     "method": "Deterministic stratified sample: every candidate (capped at the limit), then evenly spaced WAIT decisions, then evenly spaced NO_TRADE decisions in chronological order.",
@@ -158,10 +159,14 @@
         "directional_return_pct": null,
         "move_atr": 0.4185
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-1"
     },
     {
       "case": 2,
@@ -192,10 +197,14 @@
         "directional_return_pct": null,
         "move_atr": 2.6022
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +2.20 ATR, depth -2.57 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-2"
     },
     {
       "case": 3,
@@ -225,10 +234,14 @@
         "directional_return_pct": null,
         "move_atr": 0.7761
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-3"
     },
     {
       "case": 4,
@@ -259,10 +272,14 @@
         "directional_return_pct": null,
         "move_atr": 0.6466
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +0.87 ATR, depth 2.03 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-4"
     },
     {
       "case": 5,
@@ -292,10 +309,14 @@
         "directional_return_pct": null,
         "move_atr": 0.6502
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-5"
     },
     {
       "case": 6,
@@ -326,10 +347,14 @@
         "directional_return_pct": null,
         "move_atr": 0.5039
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -0.62 ATR, depth 2.47 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-6"
     },
     {
       "case": 7,
@@ -360,10 +385,14 @@
         "directional_return_pct": null,
         "move_atr": 1.5633
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +0.94 ATR, depth -0.18 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-7"
     },
     {
       "case": 8,
@@ -393,10 +422,14 @@
         "directional_return_pct": null,
         "move_atr": 5.6384
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-8"
     },
     {
       "case": 9,
@@ -426,10 +459,14 @@
         "directional_return_pct": null,
         "move_atr": 7.4691
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-9"
     },
     {
       "case": 10,
@@ -460,10 +497,14 @@
         "directional_return_pct": null,
         "move_atr": 2.8726
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +1.74 ATR, depth -1.66 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-10"
     },
     {
       "case": 11,
@@ -493,10 +534,14 @@
         "directional_return_pct": null,
         "move_atr": 1.1188
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-11"
     },
     {
       "case": 12,
@@ -527,10 +572,14 @@
         "directional_return_pct": null,
         "move_atr": 3.02
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +1.39 ATR, depth 1.06 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-12"
     },
     {
       "case": 13,
@@ -561,10 +610,14 @@
         "directional_return_pct": null,
         "move_atr": 0.78
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -0.43 ATR, depth 2.33 ATR, extended=False; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-13"
     },
     {
       "case": 14,
@@ -594,10 +647,14 @@
         "directional_return_pct": null,
         "move_atr": 1.0826
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-14"
     },
     {
       "case": 15,
@@ -627,10 +684,14 @@
         "directional_return_pct": null,
         "move_atr": 0.7987
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-15"
     },
     {
       "case": 16,
@@ -661,10 +722,14 @@
         "directional_return_pct": null,
         "move_atr": 0.2739
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +1.21 ATR, depth 1.20 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-16"
     },
     {
       "case": 17,
@@ -694,10 +759,14 @@
         "directional_return_pct": null,
         "move_atr": 1.3211
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-17"
     },
     {
       "case": 18,
@@ -728,10 +797,14 @@
         "directional_return_pct": null,
         "move_atr": 0.6734
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +1.77 ATR, depth 1.48 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-18"
     },
     {
       "case": 19,
@@ -761,10 +834,14 @@
         "directional_return_pct": null,
         "move_atr": 1.2773
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_UP for BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-19"
     },
     {
       "case": 20,
@@ -795,10 +872,14 @@
         "directional_return_pct": null,
         "move_atr": 0.3044
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +0.89 ATR, depth 1.80 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-20"
     },
     {
       "case": 21,
@@ -828,10 +909,14 @@
         "directional_return_pct": null,
         "move_atr": 4.5614
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-21"
     },
     {
       "case": 22,
@@ -862,10 +947,14 @@
         "directional_return_pct": null,
         "move_atr": 1.0646
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +2.37 ATR, depth -1.18 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-22"
     },
     {
       "case": 23,
@@ -896,10 +985,14 @@
         "directional_return_pct": null,
         "move_atr": 6.3909
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +0.66 ATR, depth 1.51 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-23"
     },
     {
       "case": 24,
@@ -929,10 +1022,14 @@
         "directional_return_pct": null,
         "move_atr": 0.1503
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-24"
     },
     {
       "case": 25,
@@ -963,10 +1060,14 @@
         "directional_return_pct": null,
         "move_atr": 3.1474
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +2.12 ATR, depth -1.78 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-25"
     },
     {
       "case": 26,
@@ -996,10 +1097,14 @@
         "directional_return_pct": null,
         "move_atr": 4.1622
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-26"
     },
     {
       "case": 27,
@@ -1030,10 +1135,14 @@
         "directional_return_pct": null,
         "move_atr": 3.0528
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -1.21 ATR, depth -0.42 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-27"
     },
     {
       "case": 28,
@@ -1063,10 +1172,14 @@
         "directional_return_pct": null,
         "move_atr": 0.7323
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-28"
     },
     {
       "case": 29,
@@ -1097,10 +1210,14 @@
         "directional_return_pct": null,
         "move_atr": 1.6579
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -0.50 ATR, depth 2.17 ATR, extended=False; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-29"
     },
     {
       "case": 30,
@@ -1127,10 +1244,14 @@
         "directional_return_pct": null,
         "move_atr": 1.9584
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "trend: trend=NEUTRAL has no directional pullback. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-30"
     },
     {
       "case": 31,
@@ -1160,10 +1281,14 @@
         "directional_return_pct": null,
         "move_atr": 5.2934
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-31"
     },
     {
       "case": 32,
@@ -1194,10 +1319,14 @@
         "directional_return_pct": null,
         "move_atr": 0.8078
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +0.80 ATR, depth -0.02 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-32"
     },
     {
       "case": 33,
@@ -1224,10 +1353,14 @@
         "directional_return_pct": null,
         "move_atr": 0.3
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "trend: trend=NEUTRAL has no directional pullback. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-33"
     },
     {
       "case": 34,
@@ -1257,10 +1390,14 @@
         "directional_return_pct": null,
         "move_atr": 0.4628
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-34"
     },
     {
       "case": 35,
@@ -1292,10 +1429,14 @@
         "directional_return_pct": null,
         "move_atr": 1.0951
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "AWAITING_RECLAIM: close=111304.25, EMA21=111260.10, histogram change +22.364529, RSI change +12.21; confirmation incomplete. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-35"
     },
     {
       "case": 36,
@@ -1325,10 +1466,14 @@
         "directional_return_pct": null,
         "move_atr": 0.8184
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-36"
     },
     {
       "case": 37,
@@ -1359,10 +1504,14 @@
         "directional_return_pct": null,
         "move_atr": 10.2463
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -1.17 ATR, depth 1.96 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-37"
     },
     {
       "case": 38,
@@ -1392,10 +1541,14 @@
         "directional_return_pct": null,
         "move_atr": 0.7017
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_UP for BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-38"
     },
     {
       "case": 39,
@@ -1426,10 +1579,14 @@
         "directional_return_pct": null,
         "move_atr": 2.3745
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -1.37 ATR, depth -0.83 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-39"
     },
     {
       "case": 40,
@@ -1460,10 +1617,14 @@
         "directional_return_pct": -0.022893,
         "move_atr": 0.1302
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "SHORT",
+      "review_notes": "candidate: all frozen gates passed: fast EMA -0.12 ATR, depth 0.52 ATR, RSI 47.34, histogram change -17.994127, room not applicable (no level). Independent review decision SHORT matches the recorded SHORT. Manual flag: No support level existed below price, so the frozen 'room to support >= 1.0 ATR' check was not applicable rather than passed. Manual review should confirm that a missing support level is intended to permit a short candidate.",
+      "reviewed_direction": "SHORT",
+      "review_result": "PASS_WITH_MANUAL_FLAG",
+      "manual_review_required": true,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-40"
     },
     {
       "case": 41,
@@ -1493,10 +1654,14 @@
         "directional_return_pct": null,
         "move_atr": 2.1557
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-41"
     },
     {
       "case": 42,
@@ -1527,10 +1692,14 @@
         "directional_return_pct": null,
         "move_atr": 3.793
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +1.47 ATR, depth 0.44 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-42"
     },
     {
       "case": 43,
@@ -1560,10 +1729,14 @@
         "directional_return_pct": null,
         "move_atr": 0.1764
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_UP for STRONG_BULLISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-43"
     },
     {
       "case": 44,
@@ -1594,10 +1767,14 @@
         "directional_return_pct": null,
         "move_atr": 5.8568
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +1.61 ATR, depth -0.88 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-44"
     },
     {
       "case": 45,
@@ -1629,10 +1806,14 @@
         "directional_return_pct": null,
         "move_atr": 2.8008
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "AWAITING_MOMENTUM_CONFIRMATION: close=67170.00, EMA21=67191.03, histogram change -34.681361, RSI change +2.67; confirmation incomplete. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-45"
     },
     {
       "case": 46,
@@ -1662,10 +1843,14 @@
         "directional_return_pct": null,
         "move_atr": 3.8985
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=HIGH_VOLATILITY is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-46"
     },
     {
       "case": 47,
@@ -1696,10 +1881,14 @@
         "directional_return_pct": null,
         "move_atr": 1.0872
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +2.70 ATR, depth -0.05 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-47"
     },
     {
       "case": 48,
@@ -1726,10 +1915,14 @@
         "directional_return_pct": null,
         "move_atr": 1.5046
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "trend: trend=NEUTRAL has no directional pullback. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-48"
     },
     {
       "case": 49,
@@ -1760,10 +1953,14 @@
         "directional_return_pct": null,
         "move_atr": 6.0331
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance +0.53 ATR, depth -0.29 ATR, extended=False; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-49"
     },
     {
       "case": 50,
@@ -1790,10 +1987,14 @@
         "directional_return_pct": null,
         "move_atr": 1.2389
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "trend: trend=NEUTRAL has no directional pullback. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-50"
     },
     {
       "case": 51,
@@ -1824,10 +2025,14 @@
         "directional_return_pct": null,
         "move_atr": 0.4889
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -2.37 ATR, depth -1.53 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-51"
     },
     {
       "case": 52,
@@ -1857,10 +2062,14 @@
         "directional_return_pct": null,
         "move_atr": 3.6206
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-52"
     },
     {
       "case": 53,
@@ -1890,10 +2099,14 @@
         "directional_return_pct": null,
         "move_atr": 0.5514
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "structure_invalidated: adverse CHOCH_DOWN at age 40.0 bars (limit 40). Independent review decision NO_TRADE matches the recorded NO_TRADE. Manual flag: The blocking CHOCH_DOWN was exactly 40 bars old (the inclusive lookback limit), and two later CHOCH_UP events did not clear it under the frozen rules. Borderline invalidation; manual review should confirm the lookback semantics.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS_WITH_MANUAL_FLAG",
+      "manual_review_required": true,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-53"
     },
     {
       "case": 54,
@@ -1924,10 +2137,14 @@
         "directional_return_pct": null,
         "move_atr": 2.1265
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -0.81 ATR, depth 0.60 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-54"
     },
     {
       "case": 55,
@@ -1958,10 +2175,14 @@
         "directional_return_pct": null,
         "move_atr": 4.1734
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -1.03 ATR, depth 0.90 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-55"
     },
     {
       "case": 56,
@@ -1988,10 +2209,14 @@
         "directional_return_pct": null,
         "move_atr": 4.4531
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "trend: trend=NEUTRAL has no directional pullback. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-56"
     },
     {
       "case": 57,
@@ -2022,10 +2247,14 @@
         "directional_return_pct": null,
         "move_atr": 4.4524
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -1.40 ATR, depth 1.25 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-57"
     },
     {
       "case": 58,
@@ -2052,10 +2281,14 @@
         "directional_return_pct": null,
         "move_atr": 3.0398
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "trend: trend=NEUTRAL has no directional pullback. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-58"
     },
     {
       "case": 59,
@@ -2086,10 +2319,14 @@
         "directional_return_pct": null,
         "move_atr": 8.2758
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "WAIT",
+      "review_notes": "pullback_not_present: fast EMA distance -2.23 ATR, depth -0.28 ATR, extended=True; price is not in the frozen pullback zone. Independent review decision WAIT matches the recorded WAIT.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-59"
     },
     {
       "case": 60,
@@ -2119,10 +2356,35 @@
         "directional_return_pct": null,
         "move_atr": 0.5804
       },
-      "review_status": "PENDING",
-      "reviewer": null,
-      "reviewed_decision": null,
-      "review_notes": null
+      "review_status": "REVIEWED",
+      "reviewer": "Freebuff automated coding agent (LLM); not a human",
+      "reviewed_decision": "NO_TRADE",
+      "review_notes": "regime_compatibility: regime=UNCERTAIN is not required TRENDING_DOWN for STRONG_BEARISH. Independent review decision NO_TRADE matches the recorded NO_TRADE.",
+      "reviewed_direction": "NONE",
+      "review_result": "PASS",
+      "manual_review_required": false,
+      "evidence_ref": "PHASE_2_REVIEW_EVIDENCE.json#case-60"
     }
-  ]
+  ],
+  "review": {
+    "reviewed_at": "2026-11-23T12:37:32.867078+00:00",
+    "reviewer": "Freebuff automated coding agent (LLM); not a human",
+    "method": "Replayed each case from the frozen BTCUSDT M15 parquet, reconstructed the Phase 1 snapshot, then independently re-applied the documented trend-pullback gate order and numeric thresholds to the recorded inputs. The original decision was hidden during derivation and used only for comparison. No frozen threshold was changed.",
+    "cases_reviewed": 60,
+    "results": {
+      "PASS": 58,
+      "PASS_WITH_MANUAL_FLAG": 2
+    },
+    "decisions": {
+      "NO_TRADE": 30,
+      "WAIT": 29,
+      "SHORT": 1
+    },
+    "disagreements": [],
+    "manual_flags": [
+      40,
+      53
+    ],
+    "provenance": "Automated review by a coding agent. This is not independent human approval and must not be described as such."
+  }
 }

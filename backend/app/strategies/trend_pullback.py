@@ -769,9 +769,19 @@ def evaluate_trend_pullback(
             name="confirmation",
             passed=confirmed,
             detail=(
-                "Closed candle reclaimed EMA21 with improving MACD histogram and RSI."
+                (
+                    "Closed candle reclaimed EMA21 with improving MACD histogram and RSI."
+                    if direction is StrategyDirection.LONG
+                    else "Closed candle lost EMA21 with weakening MACD histogram and RSI."
+                )
                 if confirmed
-                else "Confirmation requires the closed candle to reclaim EMA21 with improving MACD histogram and RSI."
+                else (
+                    "Confirmation requires the closed candle to reclaim EMA21 with improving "
+                    "MACD histogram and RSI."
+                    if direction is StrategyDirection.LONG
+                    else "Confirmation requires the closed candle to lose EMA21 with weakening "
+                    "MACD histogram and RSI."
+                )
             ),
         )
     )

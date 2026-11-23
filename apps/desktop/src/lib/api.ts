@@ -51,12 +51,22 @@ export const WS_URL = (() => {
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly requestId: string | null;
+  readonly retryable: boolean;
 
-  constructor(message: string, status: number, code: string) {
+  constructor(
+    message: string,
+    status: number,
+    code: string,
+    requestId: string | null = null,
+    retryable = status === 0 || status >= 500,
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code;
+    this.requestId = requestId;
+    this.retryable = retryable;
   }
 }
 
@@ -72,24 +82,35 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       "Cannot reach the local KBMTI backend on 127.0.0.1:8756. Start it, then retry.",
       0,
       "BACKEND_UNREACHABLE",
+      null,
+      true,
     );
   }
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}.`;
     let code = `HTTP_${response.status}`;
+    let requestId = response.headers.get("X-Request-ID");
     try {
       const body = (await response.json()) as {
-        error?: { message?: string; code?: string };
+        error?: { message?: string; code?: string; request_id?: string };
         detail?: string;
       };
       if (body.error?.message) message = body.error.message;
       if (body.error?.code) code = body.error.code;
       else if (body.detail) message = body.detail;
+      if (body.error?.request_id) requestId = body.error.request_id;
     } catch {
       // Keep the generic message when the body is not JSON.
     }
-    throw new ApiError(message, response.status, code);
+    if (response.status === 502 || response.status === 504) {
+      code = "UPSTREAM_UNAVAILABLE";
+      message =
+        "The local API gateway lost the backend while processing this request. " +
+        "The backend may be restarting or the Qwen runtime may have stopped. " +
+        "Your last successful analysis is preserved; retry once the runtime is READY.";
+    }
+    throw new ApiError(message, response.status, code, requestId, response.status >= 500);
   }
 
   return (await response.json()) as T;

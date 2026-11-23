@@ -55,7 +55,14 @@ from .config import (
     LaunchError,
     validate_environment,
 )
-from .services import ServiceManager, patron_state, ui_theme, wait_for_services
+from .services import (
+    ServiceManager,
+    ui_theme,
+    verify_qwen_inference,
+    wait_for_patron,
+    wait_for_qwen,
+    wait_for_services,
+)
 
 THEMES: dict[str, dict[str, str]] = {
     "dark": {
@@ -160,25 +167,35 @@ class LaunchController(QObject):
         self._thread = threading.Thread(target=self._run, name="kbmti-launch", daemon=True)
         self._thread.start()
 
+    def _progress(self, text: str) -> None:
+        """Mirror the real startup stage to the console and the loading surface."""
+
+        print(f"[....] {text}", flush=True)
+        self.status.emit(text)
+
     def _run(self) -> None:
         try:
-            self.status.emit("Checking application configuration…")
+            self._progress("Launcher integrity and license verified")
             validate_environment(self.config)
-            self.status.emit("Starting backend services…")
+            self._progress("Starting backend supervisor…")
             self.manager = ServiceManager(self.config)
             self.manager.start()
-            self.status.emit("Starting frontend server…")
-            wait_for_services(self.manager, on_status=self.status.emit)
+            self._progress("Backend process started · starting frontend server")
+            wait_for_services(self.manager, on_status=self._progress)
             if self._closing:
                 return
-            self.status.emit("Connecting to market data…")
-            state = patron_state(self.config)
-            if state:
-                label = str(state.get("state", "unknown")).lower()
-                model = state.get("model_id", "PATRON")
-                self.status.emit(f"{model} {label} · preparing workspace")
-            else:
-                self.status.emit("Market services ready · preparing workspace")
+            self._progress("Qwen Vulkan initialization started by the backend")
+            wait_for_qwen(self.config, on_status=self._progress)
+            if self._closing:
+                return
+            verify_qwen_inference(self.config, on_status=self._progress)
+            if self._closing:
+                return
+            self._progress("PATRON production checkpoint · verifying readiness")
+            state = wait_for_patron(self.config, on_status=self._progress)
+            model = state.get("model_id", "PATRON")
+            self._progress(f"{model} READY · all required services verified")
+            print("[OK] KBMTI READY · launching application", flush=True)
             theme = ui_theme(self.config)
             self.ready.emit(self.config.frontend_url, theme)
         except LaunchError as exc:
@@ -192,6 +209,9 @@ class LaunchController(QObject):
         if not self.manager:
             return ""
         parts: list[str] = []
+        state = self.manager.snapshot()
+        if state:
+            parts.append("--- supervisor state ---\n" + "\n".join(str(row) for row in state))
         for service in self.manager.services():
             try:
                 text = service.log_path.read_text(encoding="utf-8", errors="replace")
@@ -206,6 +226,7 @@ class LaunchController(QObject):
         self._closing = True
         if self.manager:
             self.manager.stop()
+            self.manager = None
 
 
 class LocalPage(QWebEnginePage):
@@ -395,12 +416,12 @@ class ErrorPage(QWidget):
         layout.addWidget(self.detail, 1)
 
         row = QHBoxLayout()
-        logs = QPushButton("Open logs", self)
+        logs = QPushButton("View Logs", self)
         logs.clicked.connect(self._open_logs)
-        retry = QPushButton("Retry", self)
+        retry = QPushButton("Retry Initialization", self)
         retry.setObjectName("retryButton")
         retry.clicked.connect(lambda: self._on_retry and self._on_retry())
-        quit_button = QPushButton("Quit", self)
+        quit_button = QPushButton("Exit KBMTI", self)
         quit_button.clicked.connect(lambda: self._on_quit and self._on_quit())
         for button in (logs, retry, quit_button):
             row.addWidget(button)

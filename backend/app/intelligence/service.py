@@ -215,7 +215,10 @@ class IntelligenceService:
                     )
                 }
             )
-        if deterministic.qwen.status is not QwenStatus.INITIALIZING:
+        if deterministic.qwen.status not in {
+            QwenStatus.INITIALIZING,
+            QwenStatus.INITIALIZATION_TIMEOUT,
+        }:
             # Timestamp at write time: narration can take tens of seconds, and a
             # pre-inference timestamp would make the entry immediately stale.
             self._cache[cache_key] = (time.monotonic(), deterministic)
@@ -269,7 +272,7 @@ class IntelligenceService:
             }
         )
 
-    def _qwen_not_ready(self) -> tuple[QwenStatus, str]:
+    def _qwen_not_ready(self, *, waited_seconds: float = 0.0) -> tuple[QwenStatus, str]:
         state = str(getattr(self._kie, "health_state", "") or "")
         detail: str | None = None
         try:
@@ -277,6 +280,17 @@ class IntelligenceService:
         except Exception:  # noqa: BLE001 - diagnostics must never block the fallback
             detail = None
         if state == "INITIALIZING":
+            if (
+                self._qwen_ready_wait_seconds > 0
+                and waited_seconds >= self._qwen_ready_wait_seconds
+            ):
+                return (
+                    QwenStatus.INITIALIZATION_TIMEOUT,
+                    "Qwen did not finish initializing within "
+                    f"{waited_seconds:.1f}s. It remains on the AMD Vulkan runtime; "
+                    "deterministic interpretation returned. Retry after checking "
+                    "/api/v1/kie/status.",
+                )
             return (
                 QwenStatus.INITIALIZING,
                 "Qwen is initializing on the AMD Vulkan backend. Deterministic interpretation returned.",
@@ -316,6 +330,7 @@ class IntelligenceService:
         one inference result.
         """
 
+        request_started = time.monotonic()
         if use_qwen:
             self._ensure_qwen_loading()
         planning_result = self._planning.current(refresh=refresh)
@@ -492,8 +507,13 @@ class IntelligenceService:
             # of reporting INITIALIZING while the worker is already warming the model.
             _, waited_seconds = self._wait_for_qwen_ready()
         with self._market_lock:
-            # Another request may have completed the same inference while waiting.
+            # Another request may have completed the same inference while this one
+            # waited for the readiness gate or the lock. That result is newer than
+            # this request, so even an explicit refresh can share it instead of
+            # launching a duplicate GPU generation.
             cached = self._market_cache.get(key)
+            if cached and cached[0] >= request_started:
+                return cached[1]
             if not refresh and cached and time.monotonic() - cached[0] < 45.0:
                 return cached[1]
             if self._kie is None:
@@ -507,7 +527,7 @@ class IntelligenceService:
                     result, QwenStatus.DISABLED, "Qwen is disabled by configuration."
                 )
             elif not getattr(self._kie, "ready", False):
-                qwen_status, message = self._qwen_not_ready()
+                qwen_status, message = self._qwen_not_ready(waited_seconds=waited_seconds)
                 updated = _with_ai_status(result, qwen_status, message)
             else:
                 updated = self._market_with_qwen(
@@ -522,7 +542,10 @@ class IntelligenceService:
                     run=run,
                 )
             updated = self._with_qwen_readiness(updated, waited_seconds=waited_seconds)
-            if updated.ai_status.status is not QwenStatus.INITIALIZING:
+            if updated.ai_status.status not in {
+                QwenStatus.INITIALIZING,
+                QwenStatus.INITIALIZATION_TIMEOUT,
+            }:
                 # Timestamp at write time: a 44 s inference plus a pre-inference
                 # timestamp would evict the entry before the next poll reads it.
                 self._market_cache[key] = (time.monotonic(), updated)
@@ -674,6 +697,25 @@ class IntelligenceService:
                 )
             )
             responded = True
+            latency_ms = round((time.perf_counter() - started) * 1000.0, 2)
+            finish = str(response.get("finish") or "")
+            if finish == "timeout":
+                return _with_ai_status(
+                    result,
+                    QwenStatus.TIMEOUT,
+                    "Qwen inference reached its configured processing limit "
+                    f"({latency_ms / 1000.0:.1f}s); deterministic interpretation returned. "
+                    f"Run id: {response.get('run_id') or 'unknown'}.",
+                    latency_ms=latency_ms,
+                )
+            if response.get("cancelled"):
+                return _with_ai_status(
+                    result,
+                    QwenStatus.UNAVAILABLE,
+                    "Qwen inference was cancelled before a complete answer; "
+                    "deterministic interpretation returned.",
+                    latency_ms=latency_ms,
+                )
             parsed = parse_market_output(str(response.get("text") or ""))
             allowed_numbers: set[Decimal] = set()
             _numbers(payload, allowed_numbers)
@@ -711,7 +753,7 @@ class IntelligenceService:
                         status=QwenStatus.USED,
                         model=model,
                         run_id=response.get("run_id"),
-                        latency_ms=round((time.perf_counter() - started) * 1000.0, 2),
+                        latency_ms=latency_ms,
                         validation_notes=notes,
                     ),
                     "model_versions": {
@@ -939,6 +981,32 @@ class IntelligenceService:
                 RunRequest(messages=_messages(prompt), mode=Mode.FAST, max_tokens=700, temperature=0.0, top_p=0.9)
             )
             responded = True
+            latency_ms = round((time.perf_counter() - started) * 1000.0, 2)
+            finish = str(result.get("finish") or "")
+            if finish == "timeout" or result.get("cancelled"):
+                timed_out = finish == "timeout"
+                return base.model_copy(
+                    update={
+                        "warnings": [
+                            *base.warnings,
+                            "Qwen inference timed out; the deterministic explanation is unchanged."
+                            if timed_out
+                            else "Qwen inference was cancelled; the deterministic explanation is unchanged.",
+                        ],
+                        "qwen": QwenMetadata(
+                            used=False,
+                            status=QwenStatus.TIMEOUT if timed_out else QwenStatus.UNAVAILABLE,
+                            latency_ms=latency_ms,
+                            error=(
+                                f"Qwen inference timed out after {latency_ms / 1000.0:.1f}s; "
+                                "deterministic interpretation returned."
+                                if timed_out
+                                else "Qwen inference was cancelled before a complete answer; "
+                                "deterministic interpretation returned."
+                            ),
+                        ),
+                    }
+                )
             text = str(result.get("text") or "")
             parsed = parse_output(text)
             allowed_refs = set(base.evidence_refs) | {f"snapshot:{snapshot.snapshot_id}"}

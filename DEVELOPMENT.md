@@ -1,12 +1,20 @@
 # KBMTI Desktop Development
 
-The native desktop entry point is:
+The official desktop entry point is:
 
-```bash
-python -m kbmti
+```text
+KBMTI-RAW-TEST.exe
 ```
 
-It starts the backend, PATRON, and the Vite frontend automatically and embeds the existing React UI in a PySide6/Qt WebEngine window. You do not need to run `uvicorn` or `npm run dev` separately.
+It runs the `x.bat` login UI, verifies the access key with the KBMTI license service, and only then starts the backend, PATRON, and Vite frontend in a PySide6/Qt WebEngine window. `python -m kbmti` redirects to the EXE and never initializes the app.
+
+For licensed development, use the authenticated gateway:
+
+```bash
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER
+```
+
+You do not need to run `uvicorn` or `npm run dev` separately.
 
 ## 1. Environment
 
@@ -31,17 +39,16 @@ cd ../..
 
 ## 2. Run
 
-From the repository root:
+Start the license service, configure `KBMTI_LICENSE_SERVER_URL` in `.env`, then run:
 
-```bash
-backend/.venv/Scripts/python.exe -m kbmti
+```text
+KBMTI-RAW-TEST.exe
 ```
 
-Or activate the environment first:
+For a licensed headless development check:
 
-```powershell
-.\backend\.venv\Scripts\Activate.ps1
-python -m kbmti
+```bash
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --headless
 ```
 
 ## 3. Launcher files
@@ -71,14 +78,14 @@ There are no fixed startup sleeps. Health checks and child-exit monitoring decid
 ## 5. Useful commands
 
 ```bash
-python -m kbmti --help
-python -m kbmti --version
-python -m kbmti --devtools
-python -m kbmti --backend-port 8756 --frontend-port 5173
-python -m kbmti --headless --timeout 60
-python -m kbmti --screenshot .local/screenshots/app.png --window-size 1366x768
-python -m kbmti --mode production
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --devtools
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --backend-port 8756 --frontend-port 5173
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --headless --timeout 60
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --screenshot .local/screenshots/app.png --window-size 1366x768
+backend/.venv/Scripts/python.exe -m kbmti.launch --role DEVELOPER --mode production
 ```
+
+`python -m kbmti.runtime` and `python -m app` are internal and refused without a signed launch ticket.
 
 `--headless` is useful in CI or when debugging service startup: it launches the real backend/frontend, probes them, prints the resolved ports and PATRON state, then stops everything. It does not import Qt.
 
@@ -128,6 +135,10 @@ Launcher-specific tests cover free-port selection, occupied-port failure, npm/Vi
 
 ## 9. Security model
 
+- Official entry point is `KBMTI-RAW-TEST.exe`; `python -m kbmti` redirects to it.
+- Access keys are verified by the separate license service over HTTPS; the client pins an Ed25519 public key.
+- Launcher and backend tickets are short-lived, audience-bound, device-bound and one-time; launcher tickets are consumed before startup.
+- `KBMTI_ROLE`, fake tokens and direct Python/app startup do not authorize a session.
 - Backend and frontend bind to `127.0.0.1` only.
 - Qt navigation is restricted to the active local frontend origin.
 - JavaScript, local storage and HMR are enabled; plugins, popup windows, remote local-content access and insecure content are disabled.
@@ -135,12 +146,14 @@ Launcher-specific tests cover free-port selection, occupied-port failure, npm/Vi
 - Child process output is written to local log files. No shell command is built from user input.
 - Closing the window stops the complete child process tree.
 
-## 10. Future packaging
+See [`docs/AUTHENTICATION_AND_LICENSING.md`](docs/AUTHENTICATION_AND_LICENSING.md) for the threat model and server setup.
 
-No installer is generated in this phase. For a future PyInstaller build:
+## 10. Packaging
 
-1. Bundle `kbmti/` as the entry module (`kbmti.__main__:main`).
-2. Ship a built `apps/desktop/dist` and use `--mode production`.
-3. Bundle `backend/models/patron/best.pt` and warm-up parquet as data files.
-4. Resolve those paths through `kbmti/config.py`; it already centralizes development paths.
-5. Keep Qt WebEngine resources in the PyInstaller bundle (PySide6 hooks handle them).
+The official launcher is `KBMTI-RAW-TEST.exe`, built from `launcher/KBMTILauncher.cs` and the current `x.bat` integrity hash:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File launcher/build.ps1
+```
+
+It does not bundle Python or the frontend; the adjacent `backend/` environment and `apps/desktop` are still required. The EXE is not Authenticode-signed in this repository.

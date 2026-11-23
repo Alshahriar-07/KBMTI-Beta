@@ -627,6 +627,7 @@ export function AssistantPage() {
   );
   const kie = usePolling<KieStatus>("kie-runtime-status", () => api.kieStatus(), 5_000);
   const [retryingQwen, setRetryingQwen] = useState(false);
+  const [retryingAnalysis, setRetryingAnalysis] = useState(false);
   const [qwenActionError, setQwenActionError] = useState<string | null>(null);
   const [layers, setLayers] = useState<OverlayLayers>(DEFAULT_OVERLAY_LAYERS);
   const [focusedScenario, setFocusedScenario] = useState<ScenarioId | null>(null);
@@ -638,6 +639,9 @@ export function AssistantPage() {
       reloadIntelligence();
     }
   }, [kie.data?.ready, data?.ai_status.status, reloadIntelligence]);
+  useEffect(() => {
+    if (retryingAnalysis && !intelligence.loading) setRetryingAnalysis(false);
+  }, [retryingAnalysis, intelligence.loading]);
   const overlay = useMemo(
     () =>
       data
@@ -650,7 +654,15 @@ export function AssistantPage() {
         : null,
     [data, candles.data?.candles, layers, focusedScenario],
   );
-  const error = candles.error ?? indicators.error ?? intelligence.error;
+  const error = intelligence.error ?? candles.error ?? indicators.error;
+
+  const retryAnalysis = () => {
+    // One explicit retry at a time. The backend also serializes inference, so a
+    // double click cannot create two generations.
+    if (retryingAnalysis || intelligence.loading) return;
+    setRetryingAnalysis(true);
+    reloadIntelligence();
+  };
 
   const retryQwen = async () => {
     setRetryingQwen(true);
@@ -723,9 +735,26 @@ export function AssistantPage() {
       </header>
 
       {error && (
-        <div className="mx-auto mt-2 flex max-w-[1700px] items-start gap-2 border-y border-warn/20 bg-warn/[0.04] px-3 py-1.5 text-[10px] text-warn/90">
+        <div className="mx-auto mt-2 flex max-w-[1700px] flex-wrap items-start gap-2 border-y border-warn/20 bg-warn/[0.04] px-3 py-1.5 text-[10px] text-warn/90">
           <AlertTriangle className="mt-[1px] size-3 shrink-0" aria-hidden />
-          <p className="leading-relaxed">{error}</p>
+          <div className="min-w-0 flex-1">
+            <p className="leading-relaxed">{error}</p>
+            {intelligence.requestId && (
+              <p className="num mt-0.5 text-[8px] text-ink-faint">
+                correlation id: {intelligence.requestId}
+              </p>
+            )}
+          </div>
+          {intelligence.error && intelligence.retryable && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={retryAnalysis}
+              disabled={retryingAnalysis || intelligence.loading}
+            >
+              {retryingAnalysis || intelligence.loading ? "Retrying…" : "Retry analysis"}
+            </Button>
+          )}
         </div>
       )}
 

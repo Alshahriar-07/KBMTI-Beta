@@ -106,8 +106,8 @@ error.
   short-horizon quantile estimator, not a validated directional strategy.
 - The test period includes a regime not represented in training; any apparent edge must be
   rechecked walk-forward.
-- The Phase 2 strategy gate is still PENDING (0/60 reviewed). A better forecast does not
-  create a validated trade.
+- The Phase 2 strategy gate is still PENDING acceptance (automated 60/60 review complete;
+  independent human sign-off outstanding). A better forecast does not create a validated trade.
 
 ## 5. Recommended improvements (implemented in the candidate)
 

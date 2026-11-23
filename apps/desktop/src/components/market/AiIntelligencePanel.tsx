@@ -20,6 +20,8 @@ const ASSESSMENT_TONE: Record<
 
 const AI_TONE: Record<string, "info" | "warning" | "danger" | "muted"> = {
   USED: "info",
+  INITIALIZING: "info",
+  INITIALIZATION_TIMEOUT: "warning",
   UNAVAILABLE: "muted",
   INVALID: "danger",
   TIMEOUT: "warning",

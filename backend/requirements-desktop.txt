@@ -1,3 +1,4 @@
 # Native desktop shell. Install into the same Python 3.12 environment used to
 # launch `python -m kbmti`.
 PySide6>=6.7,<6.10
+cryptography>=42,<46
