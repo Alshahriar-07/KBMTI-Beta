@@ -1,4 +1,14 @@
-(assets/logo.png)
+<div align="center">
+
+<img src="assets/icon.png" width="120" />
+
+# KBMTI Engineering
+
+### AI-Powered Trading Intelligence & Automation
+
+**Developed by Al Shahriar Sowan**
+
+</div>
 
 # KBMTI — Native Desktop Market Intelligence Workstation
 
